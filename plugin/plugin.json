@@ -1,0 +1,14 @@
+{
+  "name": "token-optimizer",
+  "displayName": "Token Optimizer",
+  "version": "1.2.0",
+  "author": "Benawll",
+  "repository": "https://github.com/Benawll/Token-Optimizer",
+  "description": "Suite 100 % locale sans doublon pour Google Antigravity (Neon, Hydrogen, Orchestrator) : compression CLI + sandbox de logs, détecteur de boucles à 0 token, 4 skills nettes (token-setup, token-report, token-mcp, token-outline) et dashboard HTML.",
+  "logo": "assets/logo.svg",
+  "suggestedPrompts": [
+    "Audite et synchronise ce projet avec token-setup",
+    "Génère mon dashboard visuel tokens avec token-report",
+    "Extrais le squelette d'un gros fichier avec token-outline avant lecture"
+  ]
+}

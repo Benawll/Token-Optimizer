@@ -1,0 +1,13 @@
+.git/
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+logs/
+*.log
+*.tmp
+*.html
+*.png
+*.jpg
+*.webp
+*.zip

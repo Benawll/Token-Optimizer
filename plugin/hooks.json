@@ -1,0 +1,37 @@
+{
+  "token-optimizer-cli-guard": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./hooks/guard-verbose-cli.ps1",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  },
+  "token-optimizer-session-audit": {
+    "enabled": true,
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./hooks/session-start-check.ps1",
+        "timeout": 5
+      }
+    ]
+  },
+  "token-optimizer-cost-watch": {
+    "enabled": true,
+    "PostInvocation": [
+      {
+        "type": "command",
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./hooks/session-cost-watch.ps1",
+        "timeout": 5
+      }
+    ]
+  }
+}

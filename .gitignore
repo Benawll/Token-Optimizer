@@ -1,0 +1,15 @@
+# OS & IDE
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Temp, logs & generated local artifacts (keep user data out of git)
+*.log
+*.tmp
+*.temp
+*.html
+to-sandbox/
+brain_archive/
+mcp_profiles/

@@ -1,0 +1,121 @@
+# ==============================================================================
+# .antigravityignore — Template prêt à l'emploi
+# Empêche l'indexation et la lecture accidentelle des fichiers lourds/inutiles.
+# ==============================================================================
+
+# --- Contrôle de version & OS ---
+.git/
+.svn/
+.hg/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Dépendances & Environnements ---
+node_modules/
+bower_components/
+jspm_packages/
+.venv/
+venv/
+env/
+.conda/
+__pypackages__/
+vendor/
+Pods/
+.gradle/
+.m2/
+
+# --- Builds, Caches & Artefacts compilés ---
+dist/
+build/
+out/
+target/
+bin/
+obj/
+.next/
+.nuxt/
+.output/
+.svelte-kit/
+.astro/
+.turbo/
+.cache/
+.parcel-cache/
+.vite/
+__pycache__/
+*.pyc
+*.pyo
+*.class
+*.o
+*.so
+*.dll
+*.exe
+*.dylib
+
+# --- Lockfiles & Manifests générés (très gourmands en tokens) ---
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lockb
+uv.lock
+poetry.lock
+Pipfile.lock
+Cargo.lock
+Gemfile.lock
+composer.lock
+go.sum
+
+# --- Tests, Coverage & Diagnostics ---
+coverage/
+.nyc_output/
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+test-results/
+playwright-report/
+blob-report/
+
+# --- Logs, Temporaires & Dumps ---
+logs/
+*.log
+*.tmp
+*.temp
+*.bak
+*.swp
+*.dump
+*.sql.gz
+*.sqlite
+*.db
+
+# --- Fichiers minifiés & Source Maps ---
+*.min.js
+*.min.css
+*.map
+*.bundle.js
+
+# --- Médias, Polices & Archives ---
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
+*.ico
+*.svg
+*.mp4
+*.mp3
+*.wav
+*.mov
+*.pdf
+*.zip
+*.tar
+*.gz
+*.7z
+*.woff
+*.woff2
+*.ttf
+*.eot
+
+# --- IDE (garder .agents/ et .gemini/ accessibles si besoin) ---
+.idea/
+.vscode/
+*.iml
