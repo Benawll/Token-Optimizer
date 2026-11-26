@@ -8,8 +8,8 @@ $ErrorActionPreference = "Stop"
 $reportScript = Join-Path $PSScriptRoot "report-tokens.ps1"
 $jsonRaw = & powershell -NoProfile -ExecutionPolicy Bypass -File $reportScript -Latest $Latest
 $data = $jsonRaw | ConvertFrom-Json
-$pSave = $data.pluginSavings
-$gSave = $data.googleCacheSavings
+$pSave = $data.tokenOptimizerGains
+$gSave = $data.googleNativeCache
 
 $templatePath = Join-Path $PSScriptRoot "..\templates\dashboard.html"
 if (-not (Test-Path $templatePath)) {
@@ -29,14 +29,14 @@ if ($Open) {
 }
 
 [ordered]@{
-    dashboardPath     = $OutputPath
-    opened            = [bool]$Open
-    currency          = "EUR (€)"
-    timezone          = "Europe/Paris"
-    sessionsAnalyzed  = $data.sessionsAnalyzed
-    pluginSessions    = $pSave.sessionsCount
-    pluginSavedEur    = $pSave.savedEur
-    pluginSavedTokens = $pSave.savedTokens
-    pluginActualCost  = $pSave.actualCostEur
-    googleCacheEur    = $gSave.savedEur
+    dashboardPath        = $OutputPath
+    opened               = [bool]$Open
+    currency             = "EUR (€)"
+    timezone             = "Europe/Paris"
+    sessionsAnalyzed     = $data.sessionsAnalyzed
+    pluginSessions       = $pSave.sessionsProtected
+    pluginArbitrageSaved = $pSave.arbitrageSavedEur
+    pluginCliTokensSaved = $pSave.cliSavedTokens
+    pluginActualCost     = $pSave.pluginActualCost
+    googleCacheEur       = $gSave.equivalentValueEur
 } | ConvertTo-Json -Depth 3
