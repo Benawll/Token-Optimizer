@@ -29,13 +29,21 @@ $USD_TO_EUR = 0.92
 $NEON_INPUT_RATE_EUR = 2.76  # 3.00 USD * 0.92
 $NEON_OUTPUT_RATE_EUR = 13.80 # 15.00 USD * 0.92
 
+# Date officielle d'installation de Token Optimizer (25 nov 2026 21:51 Paris = 20:51 UTC)
+$PLUGIN_ACTIVATION_UTC = [datetime]::Parse("2026-11-25T20:51:08Z").ToUniversalTime()
+
 $byModel = @{}
 $byConversation = [System.Collections.Generic.List[object]]::new()
 $byProject = @{}
 $verboseOutputs = [System.Collections.Generic.List[object]]::new()
 
 $totalInput = 0L; $totalCache = 0L; $totalOutput = 0L; $totalCostUsd = 0.0
-$totalSavedTokens = 0L; $totalSavedEur = 0.0
+
+# Séparation stricte : gains réels sous le plugin vs cache historique Google
+$pluginInput = 0L; $pluginCache = 0L; $pluginOutput = 0L
+$pluginSavedTokens = 0L; $pluginSavedEur = 0.0; $pluginCostEur = 0.0; $pluginSessionsCount = 0
+
+$googleCacheSavedTokens = 0L; $googleCacheSavedEur = 0.0
 
 foreach ($file in $transcripts) {
     $convId = $file.Directory.Parent.Parent.Name
@@ -53,36 +61,59 @@ foreach ($file in $transcripts) {
     }
 
     $actualCostEur = [math]::Round($m.estimatedUsd * $USD_TO_EUR, 4)
-    # Estimation des économies : sans cache ni optimisation, chaque tour d'input au tarif Neon standard
+    # Économie théorique totale comparée au tarif Neon brut
     $unoptimizedCostEur = (($m.inputTokens / 1e6) * $NEON_INPUT_RATE_EUR) + (($m.outputTokens / 1e6) * $NEON_OUTPUT_RATE_EUR)
-    $savedEur = [math]::Max(0.0, [math]::Round($unoptimizedCostEur - $actualCostEur, 2))
-    $savedTokens = $m.cacheReadTokens
+    $sessionSavedEur = [math]::Max(0.0, [math]::Round($unoptimizedCostEur - $actualCostEur, 2))
+    $sessionSavedTokens = $m.cacheReadTokens
+
+    # Vérification si la session s'est déroulée avec le plugin actif
+    $isPluginActive = ($file.LastWriteTimeUtc -ge $PLUGIN_ACTIVATION_UTC) -or ($sample -match "token-optimizer|Token Optimizer")
 
     $totalInput += $m.inputTokens
     $totalCache += $m.cacheReadTokens
     $totalOutput += $m.outputTokens
     $totalCostUsd += $m.estimatedUsd
-    $totalSavedTokens += $savedTokens
-    $totalSavedEur += $savedEur
+
+    $googleCacheSavedTokens += $sessionSavedTokens
+    $googleCacheSavedEur += $sessionSavedEur
+
+    if ($isPluginActive) {
+        $pluginSessionsCount++
+        $pluginInput += $m.inputTokens
+        $pluginCache += $m.cacheReadTokens
+        $pluginOutput += $m.outputTokens
+        $pluginSavedTokens += $sessionSavedTokens
+        $pluginSavedEur += $sessionSavedEur
+        $pluginCostEur += $actualCostEur
+    }
 
     # Aggrégation par projet
     if (-not $byProject.ContainsKey($project)) {
         $byProject[$project] = @{
-            project      = $project
-            sessions     = 0
-            turns        = 0
-            inputTokens  = 0L
-            savedTokens  = 0L
-            costEur      = 0.0
-            savedEur     = 0.0
+            project              = $project
+            sessions             = 0
+            pluginSessions       = 0
+            turns                = 0
+            inputTokens          = 0L
+            pluginSavedTokens    = 0L
+            googleCacheTokens    = 0L
+            costEur              = 0.0
+            pluginSavedEur       = 0.0
+            googleCacheSavedEur  = 0.0
         }
     }
     $byProject[$project].sessions++
     $byProject[$project].turns += $m.turns
     $byProject[$project].inputTokens += $m.inputTokens
-    $byProject[$project].savedTokens += $savedTokens
     $byProject[$project].costEur += $actualCostEur
-    $byProject[$project].savedEur += $savedEur
+    $byProject[$project].googleCacheTokens += $sessionSavedTokens
+    $byProject[$project].googleCacheSavedEur += $sessionSavedEur
+
+    if ($isPluginActive) {
+        $byProject[$project].pluginSessions++
+        $byProject[$project].pluginSavedTokens += $sessionSavedTokens
+        $byProject[$project].pluginSavedEur += $sessionSavedEur
+    }
 
     foreach ($k in $m.byModel.Keys) {
         $src = $m.byModel[$k]
@@ -113,23 +144,26 @@ foreach ($file in $transcripts) {
     $byConversation.Add([ordered]@{
         conversationId          = $convId
         project                 = $project
+        isPluginActive          = $isPluginActive
         lastUpdated             = $lastWriteFr
         lastUpdatedIso          = $lastWriteUtc
         plannerTurns            = $m.turns
         inputTokens             = $m.inputTokens
         cacheReadTokens         = $m.cacheReadTokens
-        savedTokens             = $savedTokens
+        savedTokens             = $sessionSavedTokens
         cacheHitPct             = $m.cacheHitPct
         outputTokens            = $m.outputTokens
         avgContextTokens        = $m.avgContextTokens
         costEur                 = $actualCostEur
-        savedEur                = $savedEur
+        savedEur                = $sessionSavedEur
         estimatedUsd            = $m.estimatedUsd
         projectedNext20TurnsUsd = $m.projectedNext20TurnsUsd
     })
 }
 
 $globalHit = if ($totalInput -gt 0) { [math]::Round(($totalCache / $totalInput) * 100, 1) } else { 0.0 }
+$pluginHit = if ($pluginInput -gt 0) { [math]::Round(($pluginCache / $pluginInput) * 100, 1) } else { 0.0 }
+
 $modelSummary = @{}
 foreach ($k in $byModel.Keys) {
     $item = $byModel[$k]
@@ -149,13 +183,16 @@ $projectList = [System.Collections.Generic.List[object]]::new()
 foreach ($pk in $byProject.Keys) {
     $p = $byProject[$pk]
     $projectList.Add([ordered]@{
-        project     = $p.project
-        sessions    = $p.sessions
-        turns       = $p.turns
-        inputTokens = $p.inputTokens
-        savedTokens = $p.savedTokens
-        costEur     = [math]::Round($p.costEur, 2)
-        savedEur    = [math]::Round($p.savedEur, 2)
+        project             = $p.project
+        sessions            = $p.sessions
+        pluginSessions      = $p.pluginSessions
+        turns               = $p.turns
+        inputTokens         = $p.inputTokens
+        pluginSavedTokens   = $p.pluginSavedTokens
+        pluginSavedEur      = [math]::Round($p.pluginSavedEur, 2)
+        googleCacheTokens   = $p.googleCacheTokens
+        googleCacheSavedEur = [math]::Round($p.googleCacheSavedEur, 2)
+        costEur             = [math]::Round($p.costEur, 2)
     })
 }
 
@@ -163,17 +200,27 @@ foreach ($pk in $byProject.Keys) {
     sessionsAnalyzed      = $byConversation.Count
     currency              = "EUR"
     timezone              = "Europe/Paris (UTC+1)"
-    totals                = [ordered]@{
-        inputTokens     = $totalInput
-        cacheReadTokens = $totalCache
-        cacheHitPct     = $globalHit
-        outputTokens    = $totalOutput
-        savedTokens     = $totalSavedTokens
-        costEur         = [math]::Round($totalCostUsd * $USD_TO_EUR, 2)
-        savedEur        = [math]::Round($totalSavedEur, 2)
-        estimatedUsd    = [math]::Round($totalCostUsd, 4)
+    pluginInstalledAt     = "2026-11-25 21:51"
+    
+    # 1. ÉCONOMIES RÉELLES TOKEN OPTIMIZER (Sessions sous plugin)
+    pluginSavings         = [ordered]@{
+        sessionsCount   = $pluginSessionsCount
+        savedTokens     = $pluginSavedTokens
+        savedEur        = [math]::Round($pluginSavedEur, 2)
+        actualCostEur   = [math]::Round($pluginCostEur, 2)
+        cacheHitPct     = $pluginHit
     }
-    byProject             = @($projectList | Sort-Object savedEur -Descending)
+
+    # 2. CACHE HISTORIQUE GLOBAL GOOGLE (Toutes sessions confondues)
+    googleCacheSavings    = [ordered]@{
+        savedTokens     = $googleCacheSavedTokens
+        savedEur        = [math]::Round($googleCacheSavedEur, 2)
+        totalInput      = $totalInput
+        cacheHitPct     = $globalHit
+        actualCostEur   = [math]::Round($totalCostUsd * $USD_TO_EUR, 2)
+    }
+
+    byProject             = @($projectList | Sort-Object pluginSavedEur -Descending)
     byModel               = $modelSummary
     conversations         = @($byConversation)
     topVerboseToolOutputs = @($verboseOutputs | Sort-Object chars -Descending | Select-Object -First 8)

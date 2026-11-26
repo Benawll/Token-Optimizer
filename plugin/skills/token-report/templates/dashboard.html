@@ -14,7 +14,7 @@
     --accent: #38bdf8;
     --emerald: #10b981;
     --amber: #f59e0b;
-    --rose: #f43f5e;
+    --purple: #a855f7;
     --border: #24324d;
     --tab-active: #0284c7;
   }
@@ -43,7 +43,7 @@
     background: rgba(16, 185, 129, 0.15);
     color: var(--emerald);
     border: 1px solid rgba(16, 185, 129, 0.3);
-    padding: 3px 10px;
+    padding: 4px 10px;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -113,6 +113,19 @@
     font-weight: 700;
   }
 
+  .banner-plugin {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #a7f3d0;
+  }
+
   /* KPI Grid */
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
   .card {
@@ -129,17 +142,17 @@
     top: 0; left: 0; right: 0; height: 3px;
     background: var(--border);
   }
-  .card.gain::before { background: linear-gradient(90deg, #10b981, #38bdf8); }
-  .card.tokens::before { background: linear-gradient(90deg, #38bdf8, #818cf8); }
-  .card.spent::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-  .card.cache::before { background: linear-gradient(90deg, #10b981, #059669); }
+  .card.plugin-gain::before { background: linear-gradient(90deg, #10b981, #38bdf8); }
+  .card.plugin-tok::before { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+  .card.plugin-spent::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
+  .card.google-cache::before { background: linear-gradient(90deg, #a855f7, #6366f1); }
   
   .k { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: .04em; }
   .v { font-size: 28px; font-weight: 800; margin-top: 6px; color: #fff; }
   .v.gain { color: var(--emerald); }
   .v.tokens { color: var(--accent); }
   .v.spent { color: var(--amber); }
-  .v.cache { color: #34d399; }
+  .v.cache { color: #c084fc; }
   .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
   /* Tables */
@@ -171,7 +184,26 @@
   .tag-proj.Career-Ops { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.3); }
   .tag-proj.Token-Optimizer { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border-color: rgba(56, 189, 248, 0.3); }
   .tag-proj.Awll { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border-color: rgba(245, 158, 11, 0.3); }
+  
+  .badge-status {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .badge-status.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .badge-status.past {
+    background: rgba(148, 163, 184, 0.12);
+    color: #94a3b8;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+  }
   .eur-gain { color: var(--emerald); font-weight: 700; }
+  .eur-cache { color: #c084fc; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -179,7 +211,7 @@
   <div class="header">
     <div>
       <h1>Token Optimizer — Tableau de Bord</h1>
-      <p class="sub">Fuseau horaire : <strong>Europe/Paris (UTC+1)</strong> — Analyse hors-contexte générée à __GEN_DATE__</p>
+      <p class="sub">Fuseau horaire : <strong>Europe/Paris (UTC+1)</strong> — Plugin installé le <strong>25/11/2026 à 21:51</strong> — Généré à __GEN_DATE__</p>
     </div>
     <div>
       <span class="badge-env">Devise : EUR (€)</span>
@@ -187,12 +219,18 @@
   </div>
 
   <div class="tabs-nav">
-    <button class="tab-btn active" onclick="switchTab('tab-roi', this)">💰 Économies & ROI (Prioritaire)</button>
+    <button class="tab-btn active" onclick="switchTab('tab-roi', this)">💰 Économies Réelles & Scission</button>
     <button class="tab-btn" onclick="switchTab('tab-tech', this)">⚙️ Métriques Techniques & Modèles</button>
   </div>
 
   <!-- ONGLET 1 : ÉCONOMIES & ROI -->
   <div id="tab-roi" class="tab-content active">
+
+    <div class="banner-plugin">
+      <div>
+        🛡️ <strong>Scission transparente des gains</strong> : Seules les sessions exécutées <em>après</em> l'installation du plugin (25 nov 21h51) sont comptabilisées dans le gain « Token Optimizer ». Les sessions antérieures (comme Awll) sont classées en « Cache Google Historique ».
+      </div>
+    </div>
 
     <!-- Barres de filtres -->
     <div class="filter-bar">
@@ -213,55 +251,56 @@
       </div>
     </div>
 
-    <!-- Double Compteur et KPIs -->
+    <!-- Double Compteur et KPIs Scindés -->
     <div class="grid">
-      <div class="card gain">
-        <div class="k">Argent Économisé (€)</div>
-        <div class="v gain" id="kpi-saved-eur">0,00 €</div>
-        <div class="hint">Gain net comparé au tarif Neon brut non optimisé</div>
+      <div class="card plugin-gain">
+        <div class="k">Économies Token Optimizer (€)</div>
+        <div class="v gain" id="kpi-plugin-saved-eur">0,00 €</div>
+        <div class="hint">Gains réels exclusifs sur les sessions avec plugin actif</div>
       </div>
-      <div class="card tokens">
-        <div class="k">Tokens Épargnés</div>
-        <div class="v tokens" id="kpi-saved-tokens">0 M</div>
-        <div class="hint">Tokens en cache & compression CLI économisés</div>
+      <div class="card plugin-tok">
+        <div class="k">Tokens Protégés (Plugin)</div>
+        <div class="v tokens" id="kpi-plugin-saved-tok">0 M</div>
+        <div class="hint">Tokens en cache & CLI sous la garde du plugin</div>
       </div>
-      <div class="card spent">
-        <div class="k">Coût Réel Consommé</div>
-        <div class="v spent" id="kpi-cost-eur">0,00 €</div>
-        <div class="hint">Facture réelle estimée sur les sessions filtrées</div>
+      <div class="card plugin-spent">
+        <div class="k">Coût Réel Dépensé (Plugin)</div>
+        <div class="v spent" id="kpi-plugin-cost-eur">0,00 €</div>
+        <div class="hint">Facture réelle sur les sessions protégées</div>
       </div>
-      <div class="card cache">
-        <div class="k">Taux de Cache Global</div>
-        <div class="v cache" id="kpi-cache-pct">0%</div>
-        <div class="hint">Pourcentage de requêtes servies par le cache</div>
+      <div class="card google-cache">
+        <div class="k">Cache Google Historique (€)</div>
+        <div class="v cache" id="kpi-google-cache-eur">0,00 €</div>
+        <div class="hint">Cache natif Google des sessions avant le plugin (ex. Awll)</div>
       </div>
     </div>
 
-    <h2>📁 Répartition des Économies par Projet</h2>
+    <h2>📁 Répartition Détaillée par Projet (Scindée)</h2>
     <table>
       <thead>
         <tr>
           <th>Projet</th>
-          <th>Sessions</th>
-          <th>Tours d'IA</th>
-          <th>Tokens Épargnés</th>
-          <th>Coût Réel (€)</th>
-          <th>Argent Économisé (€)</th>
+          <th>Sessions sous Plugin</th>
+          <th>Total Sessions</th>
+          <th>Gains Plugin (€)</th>
+          <th>Tokens Plugin</th>
+          <th>Cache Google Historique (€)</th>
+          <th>Coût Total Réel (€)</th>
         </tr>
       </thead>
       <tbody id="project-rows"></tbody>
     </table>
 
-    <h2>⏱️ Détail par Conversation (Heure de Paris)</h2>
+    <h2>⏱️ Historique des Conversations & Statut du Plugin</h2>
     <table>
       <thead>
         <tr>
           <th>Projet</th>
           <th>Session</th>
-          <th>Dernière Activité</th>
+          <th>Statut Plugin</th>
+          <th>Date (France)</th>
           <th>Tours</th>
           <th>Tokens Épargnés</th>
-          <th>Cache Hit</th>
           <th>Coût Réel</th>
           <th>Économies Réalisées</th>
         </tr>
@@ -374,26 +413,25 @@
       return matchProj && matchPeriod;
     });
 
-    var totalSavedEur = 0;
-    var totalSavedTokens = 0;
-    var totalCostEur = 0;
-    var totalInputTokens = 0;
-    var totalCacheTokens = 0;
+    var pluginSavedEur = 0;
+    var pluginSavedTokens = 0;
+    var pluginCostEur = 0;
+    var googleHistoricalCacheEur = 0;
 
     filteredConv.forEach(function(c) {
-      totalSavedEur += (c.savedEur || 0);
-      totalSavedTokens += (c.savedTokens || 0);
-      totalCostEur += (c.costEur || 0);
-      totalInputTokens += (c.inputTokens || 0);
-      totalCacheTokens += (c.cacheReadTokens || 0);
+      if (c.isPluginActive) {
+        pluginSavedEur += (c.savedEur || 0);
+        pluginSavedTokens += (c.savedTokens || 0);
+        pluginCostEur += (c.costEur || 0);
+      } else {
+        googleHistoricalCacheEur += (c.savedEur || 0);
+      }
     });
 
-    var cachePct = totalInputTokens > 0 ? ((totalCacheTokens / totalInputTokens) * 100).toFixed(1) : "0.0";
-
-    document.getElementById('kpi-saved-eur').innerText = totalSavedEur.toFixed(2).replace('.', ',') + ' €';
-    document.getElementById('kpi-saved-tokens').innerText = (totalSavedTokens / 1e6).toFixed(2) + ' M';
-    document.getElementById('kpi-cost-eur').innerText = totalCostEur.toFixed(2).replace('.', ',') + ' €';
-    document.getElementById('kpi-cache-pct').innerText = cachePct + ' %';
+    document.getElementById('kpi-plugin-saved-eur').innerText = pluginSavedEur.toFixed(2).replace('.', ',') + ' €';
+    document.getElementById('kpi-plugin-saved-tok').innerText = (pluginSavedTokens / 1e6).toFixed(2) + ' M';
+    document.getElementById('kpi-plugin-cost-eur').innerText = pluginCostEur.toFixed(2).replace('.', ',') + ' €';
+    document.getElementById('kpi-google-cache-eur').innerText = googleHistoricalCacheEur.toFixed(2).replace('.', ',') + ' €';
 
     // Rendu table sessions ROI
     var roiTbody = document.getElementById('session-roi-rows');
@@ -404,15 +442,20 @@
         roiTbody.innerHTML = filteredConv.map(function(c) {
           var pClass = (c.project || 'Général').replace(/\s+/g, '-');
           var shortId = c.conversationId.length > 8 ? c.conversationId.substring(0, 8) : c.conversationId;
+          var statusBadge = c.isPluginActive ?
+            '<span class="badge-status active">🟢 Plugin Actif</span>' :
+            '<span class="badge-status past">⚪ Cache Google seul</span>';
+          var gainClass = c.isPluginActive ? 'eur-gain' : 'eur-cache';
+
           return '<tr>' +
             '<td><span class="tag-proj ' + pClass + '">' + (c.project || 'Général') + '</span></td>' +
             '<td><code>' + shortId + '</code></td>' +
+            '<td>' + statusBadge + '</td>' +
             '<td>' + c.lastUpdated + '</td>' +
             '<td>' + c.plannerTurns + '</td>' +
             '<td>' + ((c.savedTokens || 0) / 1e6).toFixed(2) + ' M</td>' +
-            '<td>' + c.cacheHitPct + ' %</td>' +
             '<td>' + (c.costEur || 0).toFixed(2) + ' €</td>' +
-            '<td class="eur-gain">+' + (c.savedEur || 0).toFixed(2) + ' €</td>' +
+            '<td class="' + gainClass + '">+' + (c.savedEur || 0).toFixed(2) + ' €</td>' +
           '</tr>';
         }).join('');
       }
@@ -425,11 +468,12 @@
         var pClass = (p.project || 'Général').replace(/\s+/g, '-');
         return '<tr>' +
           '<td><span class="tag-proj ' + pClass + '">' + p.project + '</span></td>' +
+          '<td><strong>' + (p.pluginSessions || 0) + '</strong></td>' +
           '<td>' + p.sessions + '</td>' +
-          '<td>' + p.turns + '</td>' +
-          '<td>' + ((p.savedTokens || 0) / 1e6).toFixed(2) + ' M</td>' +
+          '<td class="eur-gain">+' + (p.pluginSavedEur || 0).toFixed(2) + ' €</td>' +
+          '<td>' + ((p.pluginSavedTokens || 0) / 1e6).toFixed(2) + ' M</td>' +
+          '<td class="eur-cache">+' + ((p.googleCacheSavedEur || 0) - (p.pluginSavedEur || 0)).toFixed(2) + ' €</td>' +
           '<td>' + (p.costEur || 0).toFixed(2) + ' €</td>' +
-          '<td class="eur-gain">+' + (p.savedEur || 0).toFixed(2) + ' €</td>' +
         '</tr>';
       }).join('');
     }
