@@ -548,6 +548,7 @@
       <div class="seg" role="tablist">
         <button class="seg-btn active" id="tab-btn-overview" onclick="switchTab('overview', this)">Vue d'ensemble</button>
         <button class="seg-btn" id="tab-btn-tech" onclick="switchTab('tech', this)">Technique & Méthodo</button>
+        <button class="seg-btn" id="tab-btn-memo" onclick="switchTab('memo', this)">Mémo Commandes</button>
       </div>
       <div class="seg" aria-label="Unit selector">
         <button class="seg-btn active" id="unit-tokens" onclick="setUnit('tokens', this)">Tokens</button>
@@ -873,6 +874,9 @@
     <div class="method-box" id="method-box"></div>
   </div>
 
+  <!-- TAB 3 : COMMANDS MEMO -->
+  <div id="pane-memo" class="tab-pane"></div>
+
 </div>
 
 <script>
@@ -894,6 +898,7 @@
       subtitle: function(d) { return 'Installé le ' + d.pluginInstalledAt + ' · ' + d.timezone + ' · Généré le ' + GEN_DATE; },
       tabOverview: "Vue d'ensemble",
       tabTech: "Technique & Méthodo",
+      tabMemo: "Mémo Commandes",
       planLabel: "Abonnement & Mode",
       liveQuotaLabel: "Quotas Live Gemini (agy CLI)",
       fiveH: "Fenêtre 5 heures",
@@ -939,6 +944,7 @@
       subtitle: function(d) { return 'Installed ' + d.pluginInstalledAt + ' · ' + d.timezone + ' · Generated ' + GEN_DATE; },
       tabOverview: "Overview",
       tabTech: "Technical & Method",
+      tabMemo: "Commands Memo",
       planLabel: "Plan & Accounting Mode",
       liveQuotaLabel: "Live Gemini Quotas (agy CLI)",
       fiveH: "5-Hour Rolling Window",
@@ -1180,6 +1186,8 @@
     document.getElementById('txt-subtitle').innerText = t.subtitle(RAW_DATA);
     document.getElementById('tab-btn-overview').innerText = t.tabOverview;
     document.getElementById('tab-btn-tech').innerText = t.tabTech;
+    var memoBtn = document.getElementById('tab-btn-memo');
+    if (memoBtn) memoBtn.innerText = t.tabMemo;
     document.getElementById('txt-plan-label').innerText = t.planLabel;
     document.getElementById('txt-live-quota-label').innerText = t.liveQuotaLabel;
     document.getElementById('txt-5h-label').innerText = t.fiveH;
@@ -1633,6 +1641,151 @@
         }).join('');
 
     renderTechnicalTab();
+    renderMemoTab();
+  }
+
+  function copyCmd(btn, cmdText) {
+    var doneLbl = state.lang === 'en' ? 'Copied' : 'Copié';
+    var baseLbl = state.lang === 'en' ? 'Copy' : 'Copier';
+    function flashBtn() {
+      if (!btn) return;
+      btn.innerText = doneLbl;
+      btn.classList.add('active');
+      setTimeout(function() {
+        btn.innerText = baseLbl;
+        btn.classList.remove('active');
+      }, 1400);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(cmdText).then(flashBtn).catch(function() {
+        fallbackCopy(cmdText, flashBtn);
+      });
+    } else {
+      fallbackCopy(cmdText, flashBtn);
+    }
+  }
+
+  function fallbackCopy(text, cb) {
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (cb) cb();
+    } catch (e) {}
+  }
+
+  function renderMemoTab() {
+    var el = document.getElementById('pane-memo');
+    if (!el) return;
+    var en = state.lang === 'en';
+    var base = '$env:USERPROFILE\\.gemini\\config\\plugins\\token-optimizer\\skills';
+
+    var scripts = [
+      {
+        name: 'token-setup',
+        desc: en ? 'Audit & sync lossless .antigravityignore and compact GEMINI.md.' : 'Auditer et synchroniser .antigravityignore et GEMINI.md compact.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-setup\\scripts\\setup-workspace.ps1" -Mode sync -Apply'
+      },
+      {
+        name: 'token-mcp (auto)',
+        desc: en ? 'Auto-trim idle heavy MCP servers (3D/Unity) based on workspace stack.' : 'Désactiver automatiquement les serveurs MCP dormants (3D/Unity).',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-mcp\\scripts\\mcp-profile.ps1" -Action auto'
+      },
+      {
+        name: 'token-mcp (switch)',
+        desc: en ? 'Force a specific MCP profile: minimal, gamedev, full or none.' : 'Forcer un profil MCP : minimal, gamedev, full ou none.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-mcp\\scripts\\mcp-profile.ps1" -Action switch -Profile minimal'
+      },
+      {
+        name: 'token-outline',
+        desc: en ? 'Extract structural outline (~85-95% smaller) before bounded read_file.' : 'Extraire le squelette d\'un gros fichier (-85 à -95 %) avant read_file.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-outline\\scripts\\code-outline.ps1" -Path "<file>"'
+      },
+      {
+        name: 'token-report (Live)',
+        desc: en ? 'Launch the Highbeam real-time 5m cache monitor & dashboard server.' : 'Lancer le serveur live Highbeam (compte à rebours 5 min) et ouvrir le dashboard.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\serve-dashboard.ps1" -Port 4891'
+      },
+      {
+        name: 'token-report (Handoff)',
+        desc: en ? 'Generate a compact handoff prompt to continue in a fresh session.' : 'Préparer un handoff compact pour repartir sur une nouvelle session propre.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\handoff-session.ps1"'
+      },
+      {
+        name: 'token-report (Archive)',
+        desc: en ? 'Archive older Antigravity sessions locally.' : 'Archiver localement les anciennes sessions Antigravity.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\archive-sessions.ps1"'
+      },
+      {
+        name: 'install / update',
+        desc: en ? 'Validate and deploy plugin updates from the repository root.' : 'Valider et déployer le plugin depuis la racine du dépôt.',
+        cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File .\\install.ps1'
+      }
+    ];
+
+    var slashCmds = [
+      { name: '/grill-me', desc: en ? 'Lock design & architecture choices before editing any code.' : 'Verrouiller les choix d\'architecture/design avant toute édition.' },
+      { name: '/btw', desc: en ? 'Ask a quick side question without polluting the main context.' : 'Poser une question détour sans alourdir le contexte principal.' },
+      { name: '/compact', desc: en ? 'Compress conversation history when context grows or cache expires.' : 'Compresser l\'historique quand le contexte grossit ou expire.' },
+      { name: '/browser', desc: en ? 'Isolate web navigation and UI checks inside the browser subagent.' : 'Déléguer la navigation web et les tests UI au sous-agent dédié.' },
+      { name: '/swarm', desc: en ? 'Parallelize large multi-track tasks across isolated workers.' : 'Paralléliser plusieurs chantiers indépendants sur des workers.' },
+      { name: '/automation', desc: en ? 'Schedule recurring tasks cleanly in the background.' : 'Planifier automatiquement une tâche récurrente.' },
+      { name: 'agy -p /usage --output-format json', desc: en ? 'Read live 5h & weekly Antigravity quotas at 0 tokens.' : 'Lire en direct les quotas 5h et hebdo Antigravity (0 token).' },
+      { name: 'agy -p /credits --output-format json', desc: en ? 'Check AI Credits overage balance at 0 tokens.' : 'Vérifier le solde AI Credits / overage (0 token).' }
+    ];
+
+    var hooksList = [
+      { ev: 'PreToolUse', name: 'guard-verbose-cli → compress-cli', desc: en ? 'Transparent RTK proxy: compresses verbose tests, git diff/log, docker/tsc & raw dumps into head + errors + tail.' : 'Proxy RTK transparent : compresse tests, git diff/log, docker/tsc et lectures brutes vers sandbox (zéro blocage).' },
+      { ev: 'PreInvocation', name: 'workflow-nudge', desc: en ? '0-token monitor: warns on >5m cache cliff, mid-thread model switch, and suggests /grill-me or /btw.' : 'Moniteur 0-token : alerte falaise 5 min, changement de modèle en plein fil, et rappels /grill-me /btw.' },
+      { ev: 'SessionStart', name: 'session-start-check', desc: en ? '0-token startup audit: missing .antigravityignore, oversized rules, dynamic prefix headers, >2 MCPs.' : 'Audit 0-token au démarrage : .antigravityignore, règles >4 KB, préfixes dynamiques (dates/UUID), MCP >2.' },
+      { ev: 'PostInvocation', name: 'session-cost-watch', desc: en ? '0-token loop circuit-breaker, context milestones & cache-thrashing alerts.' : 'Garde-fou 0-token : boucles d\'échec, jalons contexte/coût et alertes cache thrashing.' }
+    ];
+
+    var copyLbl = en ? 'Copy' : 'Copier';
+
+    var scriptRows = scripts.map(function(s) {
+      var safeCmd = s.cmd.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return '<tr>' +
+        '<td><strong>' + esc(s.name) + '</strong></td>' +
+        '<td class="wrap-cell" style="color:var(--ink-2)">' + esc(s.desc) + '</td>' +
+        '<td class="wrap-cell mono" style="color:var(--ink-3)">' + esc(s.cmd) + '</td>' +
+        '<td><button class="f-pill" onclick="copyCmd(this, \'' + esc(safeCmd) + '\')">' + esc(copyLbl) + '</button></td>' +
+      '</tr>';
+    }).join('');
+
+    var slashCards = slashCmds.map(function(c) {
+      var safeC = c.name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      return '<div class="card" style="justify-content:space-between;">' +
+        '<div>' +
+          '<div class="card-head" style="margin-bottom:6px;">' +
+            '<span class="mono" style="color:var(--sage); font-weight:600;">' + esc(c.name) + '</span>' +
+            '<button class="f-pill" onclick="copyCmd(this, \'' + esc(safeC) + '\')">' + esc(copyLbl) + '</button>' +
+          '</div>' +
+          '<div class="card-foot">' + esc(c.desc) + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var hookRows = hooksList.map(function(h) {
+      return '<tr>' +
+        '<td><span class="tag-soft sage">' + esc(h.ev) + '</span></td>' +
+        '<td class="mono">' + esc(h.name) + '</td>' +
+        '<td class="wrap-cell" style="color:var(--ink-2)">' + esc(h.desc) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    el.innerHTML =
+      '<div class="section-head"><h2>' + esc(en ? 'Plugin Skills & CLI Scripts' : 'Skills & Scripts du Plugin') + '</h2><span>' + esc(en ? 'One-click copy for terminal or agent prompts' : 'Copie en 1 clic pour votre terminal') + '</span></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Skill / Script</th><th>' + esc(en ? 'Role' : 'Rôle') + '</th><th>' + esc(en ? 'Command' : 'Commande') + '</th><th></th></tr></thead><tbody>' + scriptRows + '</tbody></table></div>' +
+      '<div class="section-head"><h2>' + esc(en ? 'Slash Commands & Antigravity CLI' : 'Commandes Slash & CLI Antigravity') + '</h2><span>' + esc(en ? 'Daily workflow shortcuts' : 'Raccourcis du workflow économe') + '</span></div>' +
+      '<section class="grid-4" style="margin-bottom:22px;">' + slashCards + '</section>' +
+      '<div class="section-head"><h2>' + esc(en ? 'Automatic Hooks (0 Model Tokens)' : 'Hooks Automatiques Actifs (0 Token Modèle)') + '</h2><span>hooks.json</span></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>' + esc(en ? 'Event' : 'Événement') + '</th><th>Hook</th><th>' + esc(en ? 'Action' : 'Action') + '</th></tr></thead><tbody>' + hookRows + '</tbody></table></div>';
   }
 
   function renderTechnicalTab() {
