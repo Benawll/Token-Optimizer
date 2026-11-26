@@ -698,6 +698,8 @@ $liveConv = if ($byConversation.Count -gt 0) { $byConversation[0] } else { $null
             lastModel         = $liveConv.lastModel
             lastContextTokens = $liveConv.lastContextTokens
             lastEventUtc      = $liveConv.lastUpdatedIso
+            turns             = $liveConv.totalTurns
+            ageDays           = [math]::Round(([datetime]::UtcNow - (ConvertTo-UtcDateTime -Value $liveConv.lastUpdatedIso)).TotalDays, 1)
         }
     } else { $null }
 
