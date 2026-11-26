@@ -312,14 +312,14 @@ function Get-TranscriptMetrics {
             $bkt.rawTokens += $rawTok
             $bkt.effBaseTokens += $effBaseTok
 
-            # Classify major cache misses (model switch vs >5m TTL pause vs prefix break)
+            # Classify major cache misses (warm model switch <300s vs >5m TTL pause vs prefix break)
             $gapMin = if ($null -ne $prevPlannerUtc) { ($evUtc - $prevPlannerUtc).TotalMinutes } else { 0.0 }
             if ($turns -gt 1) {
-                if ($prevPlannerModel -ne "" -and $mName -ne $prevPlannerModel -and $uncached -gt 15000) {
+                if ($prevPlannerModel -ne "" -and $mName -ne $prevPlannerModel -and $gapMin -lt 5.0 -and $uncached -gt 15000) {
                     $bkt.modelSwitches++; $bkt.switchUncachedTokens += $uncached
                     $sessSwitches++; $sessSwitchUnc += $uncached
                 }
-                elseif ($gapMin -gt 5.0 -and $uncached -gt 15000) {
+                elseif ($gapMin -ge 5.0 -and $uncached -gt 15000) {
                     $bkt.idleMisses++; $bkt.idleUncachedTokens += $uncached
                     $sessIdles++; $sessIdleUnc += $uncached
                 }

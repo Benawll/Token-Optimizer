@@ -666,21 +666,21 @@
     <div class="hb-thresholds">
       <div class="meter-row">
         <div class="meter-head">
-          <span id="hb-turns-lbl">Tours de session (seuils 35 / 70 / 120)</span>
-          <strong class="num" id="hb-turns-val">0 / 120</strong>
+          <span id="hb-turns-lbl">Tours de session (seuils 15 / 25 / 40)</span>
+          <strong class="num" id="hb-turns-val">0 / 40</strong>
         </div>
         <div class="hb-track-wrap">
           <div class="meter-track"><div class="meter-fill" id="hb-turns-bar" style="width:0%"></div></div>
-          <span class="hb-tick" style="left:29.2%" title="35 tours"></span>
-          <span class="hb-tick" style="left:58.3%" title="70 tours"></span>
+          <span class="hb-tick" style="left:37.5%" title="15 tours"></span>
+          <span class="hb-tick" style="left:62.5%" title="25 tours"></span>
         </div>
         <div class="q-note num" id="hb-turns-hint">-</div>
       </div>
 
       <div class="meter-row">
         <div class="meter-head">
-          <span id="hb-ctx-lbl">Contexte actif (seuil 150k) &amp; Archive (30j)</span>
-          <strong class="num" id="hb-ctx-val">0 / 150 k</strong>
+          <span id="hb-ctx-lbl">Contexte actif (seuil 85k) &amp; Archive (30j)</span>
+          <strong class="num" id="hb-ctx-val">0 / 85 k</strong>
         </div>
         <div class="meter-track"><div class="meter-fill" id="hb-ctx-bar" style="width:0%"></div></div>
         <div class="q-note num" id="hb-ctx-hint">-</div>
@@ -854,7 +854,7 @@
           <span class="card-title" id="adv-title">Aide au Choix de Modèle (Conseil uniquement)</span>
           <span class="tag-soft steel" id="adv-tag">0 tok compté</span>
         </div>
-        <p class="advisor-disclaimer" id="adv-desc">Règle indicative d'aiguillage (Flash / Hydrogen / Orchestrator). Non incluse dans les économies de tokens car vous restez maître du modèle choisi.</p>
+        <p class="advisor-disclaimer" id="adv-desc">Règle indicative d'aiguillage (Hydrogen Low / Hydrogen Med / Neon). Non incluse dans les économies de tokens car vous restez maître du modèle choisi.</p>
         <div id="advisor-mix-svg" class="svg-wrap"></div>
       </div>
 
@@ -1024,7 +1024,7 @@
       c2Sub: "Mesure brute par tour à modèle égal sur l'historique analysé.",
       advTitle: "Aide au Choix de Modèle (Conseil uniquement)",
       advTag: "0 tok compté",
-      advDesc: "Règle indicative d'aiguillage (Flash / Hydrogen / Orchestrator). Non incluse dans les économies de tokens car vous restez maître du modèle choisi.",
+      advDesc: "Règle indicative d'aiguillage (Hydrogen Low / Hydrogen Med / Neon). Non incluse dans les économies de tokens car vous restez maître du modèle choisi.",
       gcacheTitle: "Cache Natif Google (Infrastructure Gemini)",
       gcacheTag: "Hors plugin",
       gcacheDesc: "Géré côté serveurs Google (non compté dans nos économies). Un changement de modèle ou un court sous-agent repart à 0 % au tour 1 ; le plugin empêche surtout les lectures brutes de casser ce préfixe.",
@@ -1041,7 +1041,7 @@
       savedCtxCliLbl: "Contexte / CLI évités",
       beforeLbl: "Avant plugin",
       afterLbl: "Avec plugin",
-      lightTier: "Léger (Flash)", midTier: "Équilibré (Hydrogen)", heavyTier: "Lourd (Neon / Claude)"
+      lightTier: "Léger (Hydrogen Low)", midTier: "Équilibré (Hydrogen Med)", heavyTier: "Lourd (Neon / Claude)"
     },
     en: {
       subtitle: function(d) { return 'Installed ' + d.pluginInstalledAt + ' · ' + d.timezone + ' · Generated ' + GEN_DATE; },
@@ -1070,7 +1070,7 @@
       c2Sub: "Model-agnostic per-turn comparison across analyzed transcripts.",
       advTitle: "Model Choice Advisor (Guidance Only)",
       advTag: "0 tok counted",
-      advDesc: "Advisory routing indicator (Flash / Hydrogen / Orchestrator). Excluded from token savings since model choice always remains yours.",
+      advDesc: "Advisory routing indicator (Hydrogen Low / Hydrogen Med / Neon). Excluded from token savings since model choice always remains yours.",
       gcacheTitle: "Google Native Prefix Cache",
       gcacheTag: "Excluded from plugin",
       gcacheDesc: "Managed by Google servers (excluded from plugin savings). Switching models or spawning short subagents starts at 0% on turn 1; the plugin mainly prevents raw dumps from breaking prefixes.",
@@ -1087,7 +1087,7 @@
       savedCtxCliLbl: "Context / CLI saved",
       beforeLbl: "Before plugin",
       afterLbl: "With plugin",
-      lightTier: "Light (Flash)", midTier: "Balanced (Hydrogen)", heavyTier: "Heavy (Neon / Claude)"
+      lightTier: "Light (Hydrogen Low)", midTier: "Balanced (Hydrogen Med)", heavyTier: "Heavy (Neon / Claude)"
     }
   };
 
@@ -1443,11 +1443,15 @@
     });
   }
 
-  function renderComparisonPanel(avgPostCtx, avgPostUnc, avgPostOut, baseline) {
+  function renderComparisonPanel(avgPostCtx, avgPostUnc, avgPostOut, baseline, excludedMixedCount) {
     var t = I18N[state.lang];
     var el = document.getElementById('chart-comp');
     var hasPre = baseline && baseline.preTurns > 0;
-    document.getElementById('c2-badge').innerText = hasPre ? (baseline.preTurns + ' ' + (state.lang === 'en' ? 'pre turns' : 'tours avant')) : 'Standard';
+    var badgeTxt = hasPre ? (baseline.preTurns + ' ' + (state.lang === 'en' ? 'pre turns' : 'tours avant')) : 'Standard';
+    if (excludedMixedCount > 0) {
+      badgeTxt += state.lang === 'en' ? ' · excl. hybrid' : ' · hors hybrides';
+    }
+    document.getElementById('c2-badge').innerText = badgeTxt;
 
     function rowHtml(label, preV, postV) {
       var deltaHtml = '<span style="color:var(--ink-3)">-</span>';
@@ -1495,7 +1499,6 @@
         '<span><span class="dot" style="background:rgba(79,168,126,0.7)"></span>' + esc(t.lightTier) + '</span>' +
         '<span><span class="dot" style="background:#74859e"></span>' + esc(t.midTier) + '</span>' +
         '<span><span class="dot" style="background:#c9945b"></span>' + esc(t.heavyTier) + '</span>' +
-        '<span class="num" style="margin-left:auto;">[Audit]: <strong>' + (badgeCount || 0) + '</strong></span>' +
       '</div>';
   }
 
@@ -1601,9 +1604,18 @@
       ' · <strong>' + fComp + '</strong> ' + (state.lang === 'en' ? 'CLI compressed' : 'CLI compressées') +
       (fLines > 0 ? (' (' + fLines + ' l.)') : '');
 
-    var avgPostCtx = postTurns > 0 ? Math.round((usedUncached + usedCached) / postTurns) : 0;
-    var avgPostUnc = postTurns > 0 ? Math.round(usedUncached / postTurns) : 0;
-    var avgPostOut = postTurns > 0 ? Math.round(usedOut / postTurns) : 0;
+    var purePostConvs = postConvs.filter(function(c) { return c.pluginStatus !== 'mixed'; });
+    var compConvs = purePostConvs.length > 0 ? purePostConvs : postConvs;
+    var compTurns = 0, compUncached = 0, compCached = 0, compOut = 0;
+    compConvs.forEach(function(c) {
+      compTurns += (c.postTurns || 0);
+      compUncached += (c.postUncachedTokens || 0);
+      compCached += (c.postCacheReadTokens || 0);
+      compOut += (c.postOutputTokens || 0);
+    });
+    var avgPostCtx = compTurns > 0 ? Math.round((compUncached + compCached) / compTurns) : 0;
+    var avgPostUnc = compTurns > 0 ? Math.round(compUncached / compTurns) : 0;
+    var avgPostOut = compTurns > 0 ? Math.round(compOut / compTurns) : 0;
     var ctxPctDiff = (baseline.avgContextPerTurn > 0 && avgPostCtx > 0)
       ? (((avgPostCtx - baseline.avgContextPerTurn) / baseline.avgContextPerTurn) * 100)
       : 0;
@@ -1627,7 +1639,7 @@
     // Charts
     document.getElementById('c1-unit').innerText = state.unit.toUpperCase();
     renderSessionBars(postConvs, baseline);
-    renderComparisonPanel(avgPostCtx, avgPostUnc, avgPostOut, baseline);
+    renderComparisonPanel(avgPostCtx, avgPostUnc, avgPostOut, baseline, purePostConvs.length > 0 ? (postConvs.length - purePostConvs.length) : 0);
 
     // Model Advisor (Excluded from Savings)
     var mixSum = Math.max(1, lT + mT + hT);
@@ -1803,8 +1815,8 @@
         tag: en ? 'Recommended' : 'Recommandé',
         cls: 'sage',
         body: en
-          ? 'Continuing the same task after >35–70 turns, >150k context, a >5m pause (cold cache), or before changing models. Asking for a handoff automatically creates a fresh conversation with a <300-token summary.'
-          : 'Pour continuer le même sujet à neuf après >35–70 tours, >150k contexte, pause >5 min (cache froid) ou avant de changer de modèle. Demander un handoff crée directement la nouvelle conversation (<300 tokens).'
+          ? 'Continuing the same task after >15–25 turns, >60k–85k context, or a >5m pause on >50k context. Writes a <400-token .agents/STATUS.md and gives the copy-paste resume prompt.'
+          : 'Pour continuer le même sujet à neuf après >15–25 tours, >60k–85k contexte ou pause >5 min sur >50k tok. Écrit .agents/STATUS.md (<400 tokens) avec le prompt de reprise.'
       },
       {
         title: '/compact',
@@ -1866,7 +1878,7 @@
       {
         name: 'token-report (Handoff)',
         desc: en ? 'Generate a compact handoff prompt (<300 tokens) to continue in a fresh session.' : 'Préparer un handoff compact (<300 tokens) pour repartir sur une nouvelle session propre.',
-        when: en ? 'When session hits >35–70 turns, >150k context, >5m idle pause, or before model switch.' : 'Session >35–70 tours, contexte >150k, pause >5 min (cache froid), ou avant changement de modèle.',
+        when: en ? 'When session hits >15–25 turns, >60k–85k context, >5m idle pause on >50k tok, or before model switch.' : 'Session >15–25 tours, contexte >60k–85k, pause >5 min sur >50k tok, ou avant changement de modèle.',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\handoff-session.ps1"'
       },
       {
@@ -1992,7 +2004,7 @@
     mb.innerHTML = state.lang === 'en'
       ? '<h3>Calculation Transparency</h3>' +
         '<ul>' +
-          '<li><strong>Zero model-arbitrage inflation:</strong> Switching between Flash, Hydrogen or Orchestrator is tracked purely in the Model Choice Advisor card and never counted as automatic plugin token savings.</li>' +
+          '<li><strong>Zero model-arbitrage inflation:</strong> Switching between Hydrogen Low, Hydrogen Med or Neon is tracked purely in the Model Choice Advisor card and never counted as automatic plugin token savings.</li>' +
           '<li><strong>Zero Google cache inflation:</strong> Native prefix caching is isolated in its own neutral panel.</li>' +
           '<li><strong>Mechanical savings formula:</strong> <code>Direct CLI blocks/compressions + Trimmed MCP schemas (1,500 tok/disabled server/turn on non-3D projects) + Residual per-turn context reduction vs pre-plugin history (' + (b.preTurns || 0) + ' pre turns)</code> without double counting.</li>' +
           '<li><strong>Active MCP profile:</strong> Active servers: <code>' + esc(asArr(m.mcpActive).join(', ') || 'none') + '</code> · Disabled: <code>' + esc(asArr(m.mcpDisabled).join(', ') || 'none') + '</code>.</li>' +
@@ -2046,34 +2058,36 @@
     var t = Number(turns || 0);
     var c = Number(ctx || 0);
     var a = Number(ageDays || 0);
-    var turnsPct = Math.max(0, Math.min(100, (t / 120) * 100));
-    var ctxPct = Math.max(0, Math.min(100, (c / 150000) * 100));
+    var turnsPct = Math.max(0, Math.min(100, (t / 40) * 100));
+    var ctxPct = Math.max(0, Math.min(100, (c / 85000) * 100));
 
-    var level = 'ok', levelCls = 'sage', label = en ? 'OK' : 'OK';
+    var level = 'ok', levelCls = 'sage', label = 'OK';
     if (a >= 30) {
       level = 'archive'; levelCls = 'steel'; label = en ? 'Archive 30d' : 'Archive 30j';
-    } else if (t >= 120 || c >= 150000) {
+    } else if (t >= 40 || c >= 85000) {
       level = 'urgent'; levelCls = 'terra'; label = en ? 'Handoff urgent' : 'Handoff urgent';
-    } else if (t >= 70 || c >= 110000) {
-      level = 'handoff'; levelCls = 'ochre'; label = en ? 'Handoff' : 'Handoff';
-    } else if (t >= 35 || c >= 75000) {
-      level = 'watch'; levelCls = 'ochre'; label = en ? 'Milestone 35' : 'Jalon 35';
+    } else if (t >= 25 || c >= 60000) {
+      level = 'handoff'; levelCls = 'ochre'; label = 'Handoff';
+    } else if (t >= 15) {
+      level = 'watch'; levelCls = 'ochre'; label = en ? 'Milestone 15' : 'Jalon 15';
     }
 
     var nextHint = '';
-    if (t < 35) {
-      nextHint = en ? ((35 - t) + ' turns before milestone 35') : ((35 - t) + ' tours avant jalon 35');
-    } else if (t < 70) {
-      nextHint = en ? ('Milestone 35 passed · Handoff at 70 (' + (70 - t) + ' left)') : ('Jalon 35 atteint · Handoff à 70 (' + (70 - t) + ' restants)');
-    } else if (t < 120) {
-      nextHint = en ? ('Handoff recommended · Critical cap 120 (' + (120 - t) + ' left)') : ('Handoff conseillé · Seuil critique 120 (' + (120 - t) + ' restants)');
+    if (t < 15) {
+      nextHint = en ? ((15 - t) + ' turns before milestone 15') : ((15 - t) + ' tours avant jalon 15');
+    } else if (t < 25) {
+      nextHint = en ? ('Milestone 15 passed · Handoff at 25 (' + (25 - t) + ' left)') : ('Jalon 15 atteint · Handoff à 25 (' + (25 - t) + ' restants)');
+    } else if (t < 40) {
+      nextHint = en ? ('Handoff recommended · Critical cap 40 (' + (40 - t) + ' left)') : ('Handoff conseillé · Seuil critique 40 (' + (40 - t) + ' restants)');
     } else {
-      nextHint = en ? 'Cap >= 120 turns — launch Handoff now' : 'Plafond >= 120 tours — lancez un Handoff';
+      nextHint = en ? 'Cap >= 40 turns — run /handoff now' : 'Plafond >= 40 tours — lancez /handoff';
     }
 
-    var ctxHint = (c >= 150000
-      ? (en ? 'Context >= 150k (Handoff recommended)' : 'Contexte >= 150k (Handoff conseillé)')
-      : (en ? (fmtTok(Math.max(0, 150000 - c)) + ' before 150k cap') : (fmtTok(Math.max(0, 150000 - c)) + ' avant seuil 150k'))) +
+    var ctxHint = (c >= 85000
+      ? (en ? 'Context >= 85k (Handoff urgent)' : 'Contexte >= 85k (Handoff urgent)')
+      : (c >= 60000
+        ? (en ? ('Context >= 60k · ' + fmtTok(85000 - c) + ' before 85k cap') : ('Contexte >= 60k · ' + fmtTok(85000 - c) + ' avant seuil 85k'))
+        : (en ? (fmtTok(Math.max(0, 85000 - c)) + ' before 85k cap') : (fmtTok(Math.max(0, 85000 - c)) + ' avant seuil 85k')))) +
       ' · ' + (en ? 'Age: ' : 'Âge : ') + fmtNum(a, 1) + (en ? 'd / 30d' : 'j / 30j');
 
     return { level: level, levelCls: levelCls, label: label, nextHint: nextHint, ctxHint: ctxHint, turnsPct: turnsPct, ctxPct: ctxPct };
@@ -2138,8 +2152,8 @@
 
     listEl.innerHTML = items.map(function(c, idx) {
       var ev = evalSessionThresholds(c.turns, c.lastContextTokens, c.ageDays);
-      var tBarCls = ev.turnsPct >= 100 ? 'crit' : (ev.turnsPct >= 58 ? 'warn' : '');
-      var cBarCls = ev.ctxPct >= 100 ? 'crit' : (ev.ctxPct >= 73 ? 'warn' : '');
+      var tBarCls = ev.turnsPct >= 100 ? 'crit' : (ev.turnsPct >= 62.5 ? 'warn' : '');
+      var cBarCls = ev.ctxPct >= 100 ? 'crit' : (ev.ctxPct >= 70.5 ? 'warn' : '');
       var badgeStyle = ev.levelCls === 'terra'
         ? 'color:var(--terra); border-color:var(--terra-bd); background:var(--terra-bg);'
         : (ev.levelCls === 'ochre'
@@ -2159,11 +2173,11 @@
           curTag +
         '</div>' +
         '<div class="hb-mini-bar">' +
-          '<div class="hb-mini-head"><span>' + (en ? 'Turns' : 'Tours') + '</span><strong class="num">' + (c.turns || 0) + ' / 120</strong></div>' +
+          '<div class="hb-mini-head"><span>' + (en ? 'Turns' : 'Tours') + '</span><strong class="num">' + (c.turns || 0) + ' / 40</strong></div>' +
           '<div class="meter-track"><div class="meter-fill ' + tBarCls + '" style="width:' + Math.round(ev.turnsPct) + '%"></div></div>' +
         '</div>' +
         '<div class="hb-mini-bar">' +
-          '<div class="hb-mini-head"><span>' + (en ? 'Context' : 'Contexte') + '</span><strong class="num">' + esc(fmtTok(c.lastContextTokens || 0)) + ' / 150 k</strong></div>' +
+          '<div class="hb-mini-head"><span>' + (en ? 'Context' : 'Contexte') + '</span><strong class="num">' + esc(fmtTok(c.lastContextTokens || 0)) + ' / 85 k</strong></div>' +
           '<div class="meter-track"><div class="meter-fill ' + cBarCls + '" style="width:' + Math.round(ev.ctxPct) + '%"></div></div>' +
         '</div>' +
         '<div><span class="tag-soft" style="' + badgeStyle + '">' + esc(ev.label) + '</span></div>' +
@@ -2206,19 +2220,19 @@
     var cBar = document.getElementById('hb-ctx-bar');
     var cHint = document.getElementById('hb-ctx-hint');
 
-    if (tLbl) tLbl.innerText = en ? 'Session turns (thresholds 35 / 70 / 120)' : 'Tours de session (seuils 35 / 70 / 120)';
-    if (tVal) tVal.innerText = (hbState.turns || 0) + ' / 120';
+    if (tLbl) tLbl.innerText = en ? 'Session turns (thresholds 15 / 25 / 40)' : 'Tours de session (seuils 15 / 25 / 40)';
+    if (tVal) tVal.innerText = (hbState.turns || 0) + ' / 40';
     if (tBar) {
       tBar.style.width = ev.turnsPct + '%';
-      tBar.className = 'meter-fill' + (ev.turnsPct >= 100 ? ' crit' : (ev.turnsPct >= 29.1 ? ' warn' : ''));
+      tBar.className = 'meter-fill' + (ev.turnsPct >= 100 ? ' crit' : (ev.turnsPct >= 37.5 ? ' warn' : ''));
     }
     if (tHint) tHint.innerText = ev.label + ' · ' + ev.nextHint;
 
-    if (cLbl) cLbl.innerText = en ? 'Active context (150k cap) & Archive (30d)' : 'Contexte actif (seuil 150k) & Archive (30j)';
-    if (cVal) cVal.innerText = fmtTok(hbState.lastCtx || 0) + ' / 150 k';
+    if (cLbl) cLbl.innerText = en ? 'Active context (85k cap) & Archive (30d)' : 'Contexte actif (seuil 85k) & Archive (30j)';
+    if (cVal) cVal.innerText = fmtTok(hbState.lastCtx || 0) + ' / 85 k';
     if (cBar) {
       cBar.style.width = ev.ctxPct + '%';
-      cBar.className = 'meter-fill' + (ev.ctxPct >= 100 ? ' crit' : (ev.ctxPct >= 73 ? ' warn' : ''));
+      cBar.className = 'meter-fill' + (ev.ctxPct >= 100 ? ' crit' : (ev.ctxPct >= 70.5 ? ' warn' : ''));
     }
     if (cHint) cHint.innerText = ev.ctxHint;
 
@@ -2254,11 +2268,14 @@
         playSoftBeep();
       }
     } else {
-      timerEl.className = 'hb-timer num crit';
-      barEl.className = 'meter-fill crit';
-      statusEl.innerText = en ? 'Cold cache (>5m) — new chat recommended' : 'Cache froid (>5m) — nouveau fil conseillé';
-      statusEl.style.color = 'var(--terra)';
-      document.title = '\uD83D\uDD34 ' + (en ? 'Cold' : 'Froid') + ' · Token Optimizer';
+      var heavyCold = (hbState.lastCtx || 0) >= 50000;
+      timerEl.className = 'hb-timer num ' + (heavyCold ? 'crit' : 'warn');
+      barEl.className = 'meter-fill ' + (heavyCold ? 'crit' : 'warn');
+      statusEl.innerText = heavyCold
+        ? (en ? 'Cold cache (>5m) + heavy context — /handoff recommended' : 'Cache froid (>5m) + contexte lourd — /handoff conseillé')
+        : (en ? 'Cold cache (>5m) — resume OK (Hydrogen Low switch allowed)' : 'Cache froid (>5m) — reprise OK (switch Hydrogen Low autorisé)');
+      statusEl.style.color = heavyCold ? 'var(--terra)' : 'var(--ochre)';
+      document.title = (heavyCold ? '\uD83D\uDD34 ' : '\uD83D\uDFE0 ') + (en ? 'Cold' : 'Froid') + ' · Token Optimizer';
     }
   }
 

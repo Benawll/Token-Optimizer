@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$CmdBase64
+    [string]$CmdBase64,
+    [int]$MinLines = 45
 )
 
 $ErrorActionPreference = "Continue"
@@ -30,7 +31,8 @@ foreach ($line in $rawLines) {
 }
 
 $totalChars = ($cleaned -join "`n").Length
-if ($cleaned.Count -le 45 -and $totalChars -le 3500) {
+$charCap = if ($MinLines -gt 45) { $MinLines * 80 } else { 3500 }
+if ($cleaned.Count -le $MinLines -and $totalChars -le $charCap) {
     if ($cleaned.Count -gt 0) {
         $cleaned -join "`n" | Write-Output
     }

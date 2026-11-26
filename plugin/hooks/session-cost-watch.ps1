@@ -62,10 +62,11 @@ try {
     # 2. Zero-token Cost & Length Predictive Watch
     if ($checkFullCost -and $metrics.turns -gt 0) {
         $milestone = $null
-        if ($metrics.turns -ge 120) { $milestone = "T" + ([int]([math]::Floor($metrics.turns / 60) * 60)) }
-        elseif ($metrics.turns -ge 70) { $milestone = "T70" }
-        elseif ($metrics.turns -ge 35) { $milestone = "T35" }
-        elseif ($metrics.lastContextTokens -ge 150000) { $milestone = "CTX150K" }
+        if ($metrics.turns -ge 40) { $milestone = "T40" }
+        elseif ($metrics.turns -ge 25) { $milestone = "T25" }
+        elseif ($metrics.turns -ge 15) { $milestone = "T15" }
+        elseif ($metrics.lastContextTokens -ge 85000) { $milestone = "CTX85K" }
+        elseif ($metrics.lastContextTokens -ge 60000) { $milestone = "CTX60K" }
         elseif ($metrics.estimatedUsd -ge 10.0) { $milestone = "USD10" }
         elseif ($metrics.estimatedUsd -ge 5.0) { $milestone = "USD5" }
         elseif ($metrics.estimatedUsd -ge 2.0) { $milestone = "USD2" }
@@ -76,7 +77,7 @@ try {
             $ctxK = [math]::Round($metrics.lastContextTokens / 1000, 1).ToString("0.0", $invCulture)
             $costStr = [math]::Round($metrics.estimatedUsd, 2).ToString("0.00", $invCulture)
             $projStr = [math]::Round($metrics.projectedNext20TurnsUsd, 2).ToString("0.00", $invCulture)
-            $messages.Add(('**Token Optimizer — Prévision session ({0} tours)** : contexte **~{1}k** | cache hit **{2}%** | coût est. **${3}** | projection +20 tours : **+${4}**. Lancez `/compact` ou demandez un handoff `token-report` pour ouvrir une nouvelle session sans perte.' -f $metrics.turns, $ctxK, $metrics.cacheHitPct, $costStr, $projStr))
+            $messages.Add(('**Token Optimizer — Prévision session ({0} tours)** : contexte **~{1}k** | cache hit **{2}%** | coût est. **${3}** | projection +20 tours : **+${4}**. Lancez `/handoff` pour repartir sur un fil propre.' -f $metrics.turns, $ctxK, $metrics.cacheHitPct, $costStr, $projStr))
             if (-not $NoSaveState -and $milestone) { Write-TokenOptimizerEvent -EventType "cost_watch" -SavedTokens 0 -ConversationId $convId -Details @{ milestone = $milestone } }
         }
 

@@ -22,6 +22,22 @@ try {
     $isVerboseTarget = $cmd -match '(?i)^\s*(dotnet\s+(test|build|restore|publish)|npm\s+(test|install|ci|run\s+(build|test|lint))|pnpm\s+(test|install|build|lint)|yarn\s+(test|build|install|lint)|pytest|python\s+-m\s+pytest|pip\s+install|uv\s+sync|cargo\s+(test|build|clippy|check)|go\s+(test|build)|mvn\s+(test|package)|(\./)?gradlew\s+(test|build)|git\s+(log|diff|show|status)|docker\s+(logs|build|compose)|kubectl\s+logs|npx\s+(tsc|eslint|vitest|jest)|tsc|eslint|vitest|jest|ruff|mypy|tree|Get-ChildItem.*-Recurse)\b'
 
     $shouldWrapRaw = ($isRawDump -and -not $hasLimiter)
+    if ($shouldWrapRaw) {
+        # Allow raw reads under 800 lines to prevent repeated micro-reads doubling new input tokens
+        if ($cmd -match '(?i)^\s*(?:cat|type|Get-Content|gc)\s+(?:-Path\s+)?["'']?([^"''\s;>|]+)["'']?\s*$') {
+            $targetPath = $Matches[1]
+            if (Test-Path $targetPath -PathType Leaf) {
+                $lineCount = 0
+                foreach ($ln in [System.IO.File]::ReadLines((Resolve-Path $targetPath).Path)) {
+                    $lineCount++
+                    if ($lineCount -ge 800) { break }
+                }
+                if ($lineCount -lt 800) {
+                    $shouldWrapRaw = $false
+                }
+            }
+        }
+    }
     $shouldWrapCmd = (-not $alreadyQuiet -and $isVerboseTarget)
 
     $wrapper = Join-Path $PSScriptRoot "compress-cli.ps1"
@@ -31,7 +47,8 @@ try {
             Write-TokenOptimizerEvent -EventType "cli_wrap_raw" -SavedTokens 0 -ConversationId ([string]$payload.conversationId) -Details @{ cmd = $cmd.Substring(0, [math]::Min(80, $cmd.Length)) }
         }
         $b64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($cmd))
-        $wrappedCmd = ('powershell -NoProfile -ExecutionPolicy Bypass -File "{0}" -CmdBase64 "{1}"' -f $wrapper, $b64)
+        $rawFlag = if ($shouldWrapRaw) { " -MinLines 800" } else { "" }
+        $wrappedCmd = ('powershell -NoProfile -ExecutionPolicy Bypass -File "{0}" -CmdBase64 "{1}"{2}' -f $wrapper, $b64, $rawFlag)
         $resp = @{
             decision  = "allow"
             overwrite = @{

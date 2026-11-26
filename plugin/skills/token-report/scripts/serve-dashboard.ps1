@@ -130,9 +130,9 @@ function Get-LiveSessionMetrics {
 
 function Get-HandoffLevel {
     param([int]$Turns, [long]$CtxTokens)
-    if ($Turns -ge 120 -or $CtxTokens -ge 150000) { return "urgent" }
-    if ($Turns -ge 70 -or $CtxTokens -ge 110000) { return "handoff" }
-    if ($Turns -ge 35 -or $CtxTokens -ge 75000) { return "watch" }
+    if ($Turns -ge 40 -or $CtxTokens -ge 85000) { return "urgent" }
+    if ($Turns -ge 25 -or $CtxTokens -ge 60000) { return "handoff" }
+    if ($Turns -ge 15) { return "watch" }
     return "ok"
 }
 
