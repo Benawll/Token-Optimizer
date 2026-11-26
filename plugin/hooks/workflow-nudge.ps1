@@ -26,7 +26,7 @@ try {
     }
     $stateDirty = $false
 
-    # 1. Real-time Cache Health Monitor (Highbeam-style: 5-min cache cliff & mid-thread model switch)
+    # 1. Real-time Cache Health Monitor (5-min cache cliff & mid-thread model switch)
     if (-not [string]::IsNullOrWhiteSpace($transcriptPath) -and (Test-Path $transcriptPath)) {
         . (Join-Path $PSScriptRoot "..\lib\token-core.ps1")
         $tailLines = @(Get-Content -Path $transcriptPath -Tail 25 -ErrorAction SilentlyContinue)

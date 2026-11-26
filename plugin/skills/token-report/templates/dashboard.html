@@ -498,7 +498,7 @@
     .quota-strip, .hb-strip, .hero, .charts-row, .grid-2-equal { grid-template-columns: 1fr; }
     .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-  /* Highbeam Live Cache Monitor Strip */
+  /* Real-Time Cache Monitor Strip */
   .hb-strip {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -562,11 +562,11 @@
     </div>
   </header>
 
-  <!-- HIGHBEAM LIVE CACHE MONITOR -->
-  <section class="hb-strip" id="highbeam-strip">
+  <!-- REAL-TIME CACHE MONITOR -->
+  <section class="hb-strip" id="live-cache-strip">
     <div class="q-block">
       <div class="q-label">
-        <span><span id="hb-dot" class="hb-live-dot"></span><span id="hb-mode-lbl">MONITEUR CACHE (HIGHBEAM)</span></span>
+        <span><span id="hb-dot" class="hb-live-dot"></span><span id="hb-mode-lbl">MONITEUR CACHE TEMPS RÉEL</span></span>
         <span id="hb-ctx-pill" class="mono">-</span>
       </div>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -1685,58 +1685,110 @@
     var en = state.lang === 'en';
     var base = '$env:USERPROFILE\\.gemini\\config\\plugins\\token-optimizer\\skills';
 
+    var resetGuide = [
+      {
+        title: en ? 'New chat' : 'Nouveau chat',
+        tag: en ? '0 context' : '0 contexte',
+        cls: '',
+        body: en
+          ? 'Best when switching to an unrelated topic or repository. Starting blank is cheaper than carrying old turns.'
+          : 'Vous démarrez un autre sujet ou autre projet. Fermez l\'ancien fil : repartir à zéro coûte bien moins cher.'
+      },
+      {
+        title: 'token-report (Handoff)',
+        tag: en ? 'Recommended' : 'Recommandé',
+        cls: 'sage',
+        body: en
+          ? 'Continuing the same task after >35–70 turns, >150k context, a >5m pause (cold cache), or before changing models. Writes a <300-token summary.'
+          : 'Pour continuer le même sujet à neuf après >35–70 tours, >150k contexte, pause >5 min (cache froid) ou avant de changer de modèle (<300 tokens).'
+      },
+      {
+        title: '/compact',
+        tag: en ? 'In-place' : 'Sur place',
+        cls: 'steel',
+        body: en
+          ? 'Use when you must stay inside the same thread. Summarizes history in place (note: consumes output tokens to write the summary).'
+          : 'Pour rester dans le même fil quand le contexte gonfle. Résume l\'historique sur place (attention : consomme des tokens de sortie pour résumer).'
+      },
+      {
+        title: '/fork',
+        tag: en ? 'Branch' : 'Branche',
+        cls: '',
+        body: en
+          ? 'Clone the active session into a parallel branch to try an alternative or risky fix without polluting the main thread.'
+          : 'Clone la session en cours pour tester une piste alternative ou risquée sans polluer la conversation principale.'
+      },
+      {
+        title: 'token-report (Archive)',
+        tag: en ? 'Disk only' : 'Disque seul',
+        cls: '',
+        body: en
+          ? 'Local disk cleanup only: zips sessions older than 30 days into brain_archive/. Does not start a new topic, free RAM, or reduce token usage.'
+          : 'Ménage disque local uniquement : zippe les sessions > 30 jours dans brain_archive/. Ne remplace pas un nouveau chat, ne libère pas la RAM et n\'affecte pas les tokens.'
+      }
+    ];
+
     var scripts = [
       {
         name: 'token-setup',
         desc: en ? 'Audit & sync lossless .antigravityignore and compact GEMINI.md.' : 'Auditer et synchroniser .antigravityignore et GEMINI.md compact.',
+        when: en ? 'Once when opening a new repository, or after adding a new stack/build folder.' : 'Une fois à l\'ouverture d\'un dépôt, ou après ajout d\'une stack / gros dossier build.',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-setup\\scripts\\setup-workspace.ps1" -Mode sync -Apply'
       },
       {
         name: 'token-mcp (auto)',
         desc: en ? 'Auto-trim idle heavy MCP servers (3D/Unity) based on workspace stack.' : 'Désactiver automatiquement les serveurs MCP dormants (3D/Unity).',
+        when: en ? 'On standard code projects to save ~1,500 tokens/turn per unused MCP server.' : 'Sur tout projet standard pour économiser ~1 500 tok/tour par serveur inutile.',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-mcp\\scripts\\mcp-profile.ps1" -Action auto'
       },
       {
         name: 'token-mcp (switch)',
         desc: en ? 'Force a specific MCP profile: minimal, gamedev, full or none.' : 'Forcer un profil MCP : minimal, gamedev, full ou none.',
+        when: en ? 'When switching manually between standard coding (minimal) and 3D/Unity (gamedev).' : 'Pour basculer à la main entre code standard (minimal) et 3D/Unity (gamedev).',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-mcp\\scripts\\mcp-profile.ps1" -Action switch -Profile minimal'
       },
       {
         name: 'token-outline',
         desc: en ? 'Extract structural outline (~85-95% smaller) before bounded read_file.' : 'Extraire le squelette d\'un gros fichier (-85 à -95 %) avant read_file.',
+        when: en ? 'Before inspecting files >300 lines so you only read the exact line range needed.' : 'Avant d\'inspecter un fichier >300 lignes pour cibler uniquement les bonnes plages.',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-outline\\scripts\\code-outline.ps1" -Path "<file>"'
       },
       {
         name: 'token-report (Live)',
-        desc: en ? 'Launch the Highbeam real-time 5m cache monitor & dashboard server.' : 'Lancer le serveur live Highbeam (compte à rebours 5 min) et ouvrir le dashboard.',
+        desc: en ? 'Launch the local live dashboard server (5-min cache countdown) at http://127.0.0.1:4891.' : 'Lancer le serveur live du tableau de bord (compte à rebours cache 5 min) sur 127.0.0.1:4891.',
+        when: en ? 'At the start of a work session (or via open-dashboard.cmd) to track 5m timer & quotas live.' : 'Au début de votre session (ou via open-dashboard.cmd) pour surveiller timer 5 min & quotas.',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\serve-dashboard.ps1" -Port 4891'
       },
       {
         name: 'token-report (Handoff)',
-        desc: en ? 'Generate a compact handoff prompt to continue in a fresh session.' : 'Préparer un handoff compact pour repartir sur une nouvelle session propre.',
+        desc: en ? 'Generate a compact handoff prompt (<300 tokens) to continue in a fresh session.' : 'Préparer un handoff compact (<300 tokens) pour repartir sur une nouvelle session propre.',
+        when: en ? 'When session hits >35–70 turns, >150k context, >5m idle pause, or before model switch.' : 'Session >35–70 tours, contexte >150k, pause >5 min (cache froid), ou avant changement de modèle.',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\handoff-session.ps1"'
       },
       {
         name: 'token-report (Archive)',
-        desc: en ? 'Archive older Antigravity sessions locally.' : 'Archiver localement les anciennes sessions Antigravity.',
+        desc: en ? 'Preview & zip older local Antigravity folders (>30d) into brain_archive/ (add -Apply).' : 'Compresser en .zip les vieux dossiers brain/ (>30j) dans brain_archive/ (ajouter -Apply).',
+        when: en ? 'Periodic disk cleanup when brain/ grows (dry-run by default; 0 effect on tokens or RAM).' : 'Ménage disque périodique quand brain/ grossit (aperçu sans -Apply ; 0 effet tokens/RAM).',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File "' + base + '\\token-report\\scripts\\archive-sessions.ps1"'
       },
       {
         name: 'install / update',
         desc: en ? 'Validate and deploy plugin updates from the repository root.' : 'Valider et déployer le plugin depuis la racine du dépôt.',
+        when: en ? 'After git pull or plugin edits—ideally right before opening a fresh session.' : 'Après un git pull ou une modif du plugin (de préférence avant d\'ouvrir une nouvelle session).',
         cmd: 'powershell -NoProfile -ExecutionPolicy Bypass -File .\\install.ps1'
       }
     ];
 
     var slashCmds = [
-      { name: '/grill-me', desc: en ? 'Lock design & architecture choices before editing any code.' : 'Verrouiller les choix d\'architecture/design avant toute édition.' },
-      { name: '/btw', desc: en ? 'Ask a quick side question without polluting the main context.' : 'Poser une question détour sans alourdir le contexte principal.' },
-      { name: '/compact', desc: en ? 'Compress conversation history when context grows or cache expires.' : 'Compresser l\'historique quand le contexte grossit ou expire.' },
-      { name: '/browser', desc: en ? 'Isolate web navigation and UI checks inside the browser subagent.' : 'Déléguer la navigation web et les tests UI au sous-agent dédié.' },
-      { name: '/swarm', desc: en ? 'Parallelize large multi-track tasks across isolated workers.' : 'Paralléliser plusieurs chantiers indépendants sur des workers.' },
-      { name: '/automation', desc: en ? 'Schedule recurring tasks cleanly in the background.' : 'Planifier automatiquement une tâche récurrente.' },
-      { name: 'agy -p /usage --output-format json', desc: en ? 'Read live 5h & weekly Antigravity quotas at 0 tokens.' : 'Lire en direct les quotas 5h et hebdo Antigravity (0 token).' },
-      { name: 'agy -p /credits --output-format json', desc: en ? 'Check AI Credits overage balance at 0 tokens.' : 'Vérifier le solde AI Credits / overage (0 token).' }
+      { name: '/grill-me', desc: en ? 'When: before coding any UI/multi-file refactor, to lock architecture first and avoid rewrites.' : 'Quand : avant toute refonte UI/multi-fichiers pour figer les choix et éviter les retours arrière.' },
+      { name: '/btw', desc: en ? 'When: mid-task side question you want answered without bloating the main thread.' : 'Quand : question détour en cours de route sans alourdir l\'historique principal.' },
+      { name: '/compact', desc: en ? 'When: context grows large and you prefer summarizing in place over starting a new thread.' : 'Quand : le contexte grossit et vous voulez rester dans la même conversation.' },
+      { name: '/fork', desc: en ? 'When: testing an alternative or risky experiment without risking the active session.' : 'Quand : tester une piste alternative ou risquée sans polluer le fil principal.' },
+      { name: '/browser', desc: en ? 'When: browsing pages or testing live UI via isolated browser subagent.' : 'Quand : navigation web ou test UI visuel délégué au sous-agent dédié.' },
+      { name: '/swarm', desc: en ? 'When: large project with independent parallel tracks that justify worker agents.' : 'Quand : gros chantier parallélisable en plusieurs tâches indépendantes.' },
+      { name: '/automation', desc: en ? 'When: repeating a workflow daily/weekly so it runs automatically in the background.' : 'Quand : tâche répétitive à planifier automatiquement en arrière-plan.' },
+      { name: 'agy -p /usage --output-format json', desc: en ? 'When: checking live 5h & weekly Antigravity quotas at 0 model tokens.' : 'Quand : consulter vos quotas 5h et hebdo en direct à 0 token modèle.' },
+      { name: 'agy -p /credits --output-format json', desc: en ? 'When: checking remaining AI Credits / overage balance at 0 model tokens.' : 'Quand : vérifier le solde AI Credits / overage à 0 token modèle.' }
     ];
 
     var hooksList = [
@@ -1748,11 +1800,23 @@
 
     var copyLbl = en ? 'Copy' : 'Copier';
 
+    var resetCards = resetGuide.map(function(g) {
+      var tagCls = g.cls ? ('tag-soft ' + g.cls) : 'tag-soft';
+      return '<div class="card">' +
+        '<div class="card-head" style="margin-bottom:4px;">' +
+          '<strong style="color:var(--ink); font-size:13px;">' + esc(g.title) + '</strong>' +
+          '<span class="' + tagCls + '">' + esc(g.tag) + '</span>' +
+        '</div>' +
+        '<div class="card-foot">' + esc(g.body) + '</div>' +
+      '</div>';
+    }).join('');
+
     var scriptRows = scripts.map(function(s) {
       var safeCmd = s.cmd.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
       return '<tr>' +
         '<td><strong>' + esc(s.name) + '</strong></td>' +
         '<td class="wrap-cell" style="color:var(--ink-2)">' + esc(s.desc) + '</td>' +
+        '<td class="wrap-cell" style="color:var(--ink)">' + esc(s.when) + '</td>' +
         '<td class="wrap-cell mono" style="color:var(--ink-3)">' + esc(s.cmd) + '</td>' +
         '<td><button class="f-pill" onclick="copyCmd(this, \'' + esc(safeCmd) + '\')">' + esc(copyLbl) + '</button></td>' +
       '</tr>';
@@ -1780,10 +1844,12 @@
     }).join('');
 
     el.innerHTML =
-      '<div class="section-head"><h2>' + esc(en ? 'Plugin Skills & CLI Scripts' : 'Skills & Scripts du Plugin') + '</h2><span>' + esc(en ? 'One-click copy for terminal or agent prompts' : 'Copie en 1 clic pour votre terminal') + '</span></div>' +
-      '<div class="table-wrap"><table><thead><tr><th>Skill / Script</th><th>' + esc(en ? 'Role' : 'Rôle') + '</th><th>' + esc(en ? 'Command' : 'Commande') + '</th><th></th></tr></thead><tbody>' + scriptRows + '</tbody></table></div>' +
-      '<div class="section-head"><h2>' + esc(en ? 'Slash Commands & Antigravity CLI' : 'Commandes Slash & CLI Antigravity') + '</h2><span>' + esc(en ? 'Daily workflow shortcuts' : 'Raccourcis du workflow économe') + '</span></div>' +
-      '<section class="grid-4" style="margin-bottom:22px;">' + slashCards + '</section>' +
+      '<div class="section-head"><h2>' + esc(en ? 'How to Reset or Continue — Quick Guide' : 'Quand repartir proprement ? — Guide de choix') + '</h2><span>' + esc(en ? 'Pick the right command for your situation' : 'Éviter de confondre Handoff, /compact et Archive') + '</span></div>' +
+      '<section style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:22px;">' + resetCards + '</section>' +
+      '<div class="section-head"><h2>' + esc(en ? 'Plugin Skills & CLI Scripts' : 'Skills & Scripts du Plugin') + '</h2><span>' + esc(en ? 'Role, use case, and one-click copy' : 'Rôle, cas d\'usage et copie en 1 clic') + '</span></div>' +
+      '<div class="table-wrap"><table><thead><tr><th>Skill / Script</th><th>' + esc(en ? 'Role' : 'Rôle') + '</th><th>' + esc(en ? 'When to use' : 'Quand l\'utiliser') + '</th><th>' + esc(en ? 'Command' : 'Commande') + '</th><th></th></tr></thead><tbody>' + scriptRows + '</tbody></table></div>' +
+      '<div class="section-head"><h2>' + esc(en ? 'Slash Commands & Antigravity CLI' : 'Commandes Slash & CLI Antigravity') + '</h2><span>' + esc(en ? 'When to use each shortcut' : 'Dans quel cas utiliser chaque raccourci') + '</span></div>' +
+      '<section style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:14px; margin-bottom:22px;">' + slashCards + '</section>' +
       '<div class="section-head"><h2>' + esc(en ? 'Automatic Hooks (0 Model Tokens)' : 'Hooks Automatiques Actifs (0 Token Modèle)') + '</h2><span>hooks.json</span></div>' +
       '<div class="table-wrap"><table><thead><tr><th>' + esc(en ? 'Event' : 'Événement') + '</th><th>Hook</th><th>' + esc(en ? 'Action' : 'Action') + '</th></tr></thead><tbody>' + hookRows + '</tbody></table></div>';
   }
@@ -1841,7 +1907,7 @@
   renderQuotaStrip();
   render();
 
-  // Highbeam Real-Time 5-min Cache Cliff Monitor
+  // Real-Time 5-min Cache Cliff Monitor
   var hbState = {
     isHttp: window.location.protocol.indexOf('http') === 0,
     soundOn: localStorage.getItem('to_hb_sound') === '1',
@@ -1896,7 +1962,7 @@
     });
   }
 
-  function renderHighbeamTick() {
+  function renderCacheMonitorTick() {
     var dot = document.getElementById('hb-dot');
     var modeLbl = document.getElementById('hb-mode-lbl');
     var ctxPill = document.getElementById('hb-ctx-pill');
@@ -1970,13 +2036,13 @@
         if (d.lastModel) hbState.lastModel = d.lastModel;
         if (d.lastContextTokens != null) hbState.lastCtx = d.lastContextTokens;
         if (d.conversationId) hbState.convId = d.conversationId;
-        renderHighbeamTick();
+        renderCacheMonitorTick();
       })
       .catch(function() {});
   }
 
-  renderHighbeamTick();
-  setInterval(renderHighbeamTick, 1000);
+  renderCacheMonitorTick();
+  setInterval(renderCacheMonitorTick, 1000);
   if (hbState.isHttp) {
     pollLiveCache();
     setInterval(pollLiveCache, 3000);

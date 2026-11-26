@@ -19,7 +19,7 @@ try {
 
     . (Join-Path $PSScriptRoot "..\lib\token-core.ps1")
 
-    $checkFullCost = $Force -or ($invNum -ge 20 -and ($invNum % 5 -eq 0))
+    $checkFullCost = $Force -or ($invNum -eq 1) -or ($invNum -ge 10 -and ($invNum % 5 -eq 0))
     $metrics = if ($checkFullCost) {
         Get-TranscriptMetrics -TranscriptPath $transcriptPath
     }
@@ -35,8 +35,10 @@ try {
             foreach ($prop in $loaded.PSObject.Properties) {
                 $arr = [System.Collections.Generic.List[string]]::new()
                 foreach ($v in @($prop.Value)) {
-                    $sv = [string]$v
-                    if (-not [string]::IsNullOrWhiteSpace($sv)) { $arr.Add($sv) }
+                    foreach ($inner in @($v)) {
+                        $sv = [string]$inner
+                        if (-not [string]::IsNullOrWhiteSpace($sv)) { $arr.Add($sv) }
+                    }
                 }
                 $state[$prop.Name] = @($arr)
             }
@@ -60,7 +62,7 @@ try {
     # 2. Zero-token Cost & Length Predictive Watch
     if ($checkFullCost -and $metrics.turns -gt 0) {
         $milestone = $null
-        if ($metrics.turns -ge 120) { $milestone = "T120" }
+        if ($metrics.turns -ge 120) { $milestone = "T" + ([int]([math]::Floor($metrics.turns / 60) * 60)) }
         elseif ($metrics.turns -ge 70) { $milestone = "T70" }
         elseif ($metrics.turns -ge 35) { $milestone = "T35" }
         elseif ($metrics.lastContextTokens -ge 150000) { $milestone = "CTX150K" }
@@ -97,7 +99,7 @@ try {
 
     if (-not $NoSaveState -and $convId -and $newKeys.Count -gt 0) {
         $merged = @(@($seen) + @($newKeys) | Select-Object -Unique)
-        $state[$convId] = ,$merged
+        $state[$convId] = [string[]]$merged
         [System.IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Depth 4), [System.Text.UTF8Encoding]::new($false))
     }
 
