@@ -47,6 +47,17 @@
     font-size: 12px;
     font-weight: 600;
   }
+  .badge-pro {
+    display: inline-block;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 6px;
+  }
   .sub { color: var(--muted); margin: 0; font-size: 13px; }
   
   /* Tabs */
@@ -210,6 +221,7 @@
     </div>
     <div>
       <span class="badge-env">Devise : EUR (€)</span>
+      <span class="badge-pro">Formule : Abonnement Pro</span>
     </div>
   </div>
 
@@ -221,10 +233,11 @@
   <!-- ONGLET 1 : ÉCONOMIES RÉELLES DU PLUGIN -->
   <div id="tab-roi" class="tab-content active">
 
-    <div class="banner-explanation">
-      <strong>Distinction stricte et transparente :</strong>
-      <br/>• <strong>Gains Token Optimizer</strong> : Économies réelles créées par nos hooks (compression des sorties CLI) et par notre arbitrage de modèles (Flash/Hydrogen au lieu de Neon). Strictement 0 € sur les sessions passées comme Awll.
-      <br/>• <strong>Cache Natif Google</strong> : Mécanisme d'infrastructure passif de Gemini présent par défaut sur toute session, avec ou sans plugin.
+    <div class="banner-explanation" style="border-left: 4px solid var(--accent); background: rgba(56, 189, 248, 0.08); padding:14px 18px; margin-bottom:16px; border-radius:8px;">
+      <div style="font-weight:700; color:#fff; margin-bottom:4px; font-size:14px;">⚡ Préservation de ton Quota Journalier Pro</div>
+      <div style="font-size:13px; color:#cbd5e1; line-height:1.5;">
+        Sous abonnement Pro, tu ne paies pas de surfacturation au token : la valeur de Token Optimizer se mesure en <strong>marge de quota préservée</strong>. En aiguillant automatiquement tes tâches vers Flash Low/Medium au lieu de saturer ton compte sur Neon, le plugin a réduit l'empreinte de tes sessions de <strong id="pro-reduction-badge" style="color:var(--emerald);">-86,7 %</strong>, t'offrant <strong>~6,5x plus de requêtes par jour</strong> sans risquer de ralentissement ou de blocage quotidien.
+      </div>
     </div>
 
     <!-- Filtres -->
@@ -299,10 +312,11 @@
           <th>Statut</th>
           <th>Date (France)</th>
           <th>Tours</th>
-          <th>Gain Token Optimizer (€)</th>
+          <th>Cache Hit</th>
+          <th>Réduction Quota</th>
+          <th>Gain Estimé (€)</th>
           <th>CLI Tronquée</th>
-          <th>Coût Réel (€)</th>
-          <th>Cache Natif Google</th>
+          <th>Coût Équiv. (€)</th>
         </tr>
       </thead>
       <tbody id="session-roi-rows"></tbody>
@@ -436,6 +450,9 @@
     var roiMultiplier = pluginCostEur > 0 ? (pluginSavedEur / pluginCostEur).toFixed(1) : "0,0";
     var pluginCachePct = pluginInputTokens > 0 ? ((pluginCacheTokens / pluginInputTokens) * 100).toFixed(1) : "0,0";
 
+    var proBadge = document.getElementById('pro-reduction-badge');
+    if (proBadge) proBadge.innerText = '-' + reductionPct.replace('.', ',') + ' %';
+
     document.getElementById('kpi-plugin-saved-eur').innerText = '+' + pluginSavedEur.toFixed(2).replace('.', ',') + ' €';
     document.getElementById('kpi-gain-hint').innerText = 'Pour ' + pluginCostEur.toFixed(2).replace('.', ',') + ' € dépensés sous le plugin';
     document.getElementById('kpi-reduction-pct').innerText = '-' + reductionPct.replace('.', ',') + ' %';
@@ -448,7 +465,7 @@
     var roiTbody = document.getElementById('session-roi-rows');
     if (roiTbody) {
       if (filteredConv.length === 0) {
-        roiTbody.innerHTML = '<tr><td colspan="9" style="text-align:center; color:var(--muted); padding:20px;">Aucune session trouvée pour ces filtres.</td></tr>';
+        roiTbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--muted); padding:20px;">Aucune session trouvée pour ces filtres.</td></tr>';
       } else {
         roiTbody.innerHTML = filteredConv.map(function(c) {
           var pClass = (c.project || 'Général').replace(/\s+/g, '-');
@@ -459,9 +476,13 @@
           var pluginGainText = c.isPluginActive ?
             '<span class="eur-plugin-gain">+' + (c.pluginArbitrageEur || 0).toFixed(2) + ' €</span>' :
             '<span style="color:var(--muted)">0,00 €</span>';
+          var reductionText = c.isPluginActive ?
+            '<span class="eur-plugin-gain">-' + (c.reductionPct || 0).toFixed(1) + ' %</span>' :
+            '<span style="color:var(--muted)">0,0 %</span>';
           var cliText = (c.pluginCliSavedTokens && c.pluginCliSavedTokens > 0) ?
             (c.pluginCliSavedTokens.toLocaleString('fr-FR') + ' tok') :
             '-';
+          var cacheHitStr = (c.cacheHitPct !== undefined) ? (c.cacheHitPct + ' %') : '-';
 
           return '<tr>' +
             '<td><span class="tag-proj ' + pClass + '">' + (c.project || 'Général') + '</span></td>' +
@@ -469,10 +490,11 @@
             '<td>' + statusBadge + '</td>' +
             '<td>' + c.lastUpdated + '</td>' +
             '<td>' + c.plannerTurns + '</td>' +
+            '<td><strong>' + cacheHitStr + '</strong></td>' +
+            '<td>' + reductionText + '</td>' +
             '<td>' + pluginGainText + '</td>' +
             '<td>' + cliText + '</td>' +
             '<td>' + (c.costEur || 0).toFixed(2) + ' €</td>' +
-            '<td><span class="eur-cache-passive">' + (c.googleCacheEur || 0).toFixed(2) + ' €</span></td>' +
           '</tr>';
         }).join('');
       }

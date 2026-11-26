@@ -156,6 +156,13 @@ foreach ($file in $transcripts) {
     $lastWriteUtc = $file.LastWriteTimeUtc.ToString("o")
     $lastWriteFr = $file.LastWriteTime.ToString("yyyy-MM-dd HH:mm")
 
+    $sessionTheorique = $actualCostEur + $sessionArbitrageEur
+    $sessionReductionPct = if ($isPluginActive -and $sessionTheorique -gt 0) {
+        [math]::Round(($sessionArbitrageEur / $sessionTheorique) * 100, 1)
+    } else {
+        0.0
+    }
+
     $byConversation.Add([ordered]@{
         conversationId        = $convId
         project               = $project
@@ -169,6 +176,7 @@ foreach ($file in $transcripts) {
         outputTokens          = $m.outputTokens
         costEur               = $actualCostEur
         pluginArbitrageEur    = $sessionArbitrageEur
+        reductionPct          = $sessionReductionPct
         pluginCliSavedTokens  = $sessionCliSavedTokens
         googleCacheEur        = $sessionGoogleCacheEur
         projectedNext20Turns  = [math]::Round(($m.projectedNext20TurnsUsd * $USD_TO_EUR), 2)
