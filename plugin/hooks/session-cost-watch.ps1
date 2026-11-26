@@ -54,7 +54,7 @@ try {
         $loopWindow = "LOOP_" + [math]::Floor($metrics.latestGenericStep / 6)
         if ($Force -or ($seen -notcontains $loopWindow)) {
             $newKeys.Add($loopWindow)
-            $messages.Add(('**Token Optimizer — Boucle d''échec détectée ({0} erreurs rapprochées)** : évitez de brûler des tours en boucle — lancez `/plan` pour recadrer, `/fork` avant un autre essai, ou passez temporairement sur **Neon high**.' -f $metrics.recentFailureCount))
+            $messages.Add(('**Token Optimizer — Boucle d''échec détectée ({0} erreurs rapprochées)** : évitez de brûler des tours en boucle — lancez `/plan` pour recadrer, `/fork` avant un autre essai, ou lancez `/handoff` et ouvrez une nouvelle session sur **Gemini 4 Neon (Medium)**.' -f $metrics.recentFailureCount))
             if (-not $NoSaveState) { Write-TokenOptimizerEvent -EventType "loop_guard" -SavedTokens 0 -ConversationId $convId -Details @{ window = $loopWindow } }
         }
     }
@@ -90,7 +90,7 @@ try {
                 $invC = [System.Globalization.CultureInfo]::InvariantCulture
                 $ctxK2 = [math]::Round($metrics.lastContextTokens / 1000, 0).ToString("0", $invC)
                 $swK = [math]::Round($cd.switchUncachedTokens / 1000, 0).ToString("0", $invC)
-                $messages.Add(('**Token Optimizer — Alerte Cache Thrashing (0 token)** : **{0} changements de modèle** sur un contexte de **~{1}k** ont déjà coûté **~{2}k tokens non cachés**. Évitez les allers-retours courts sur gros contexte : restez sur le modèle chaud ou lancez `/compact` / une nouvelle session avant de changer de palier.' -f $cd.modelSwitches, $ctxK2, $swK))
+                $messages.Add(('**Token Optimizer — Alerte Cache Thrashing (0 token)** : **{0} changements de modèle** sur un contexte de **~{1}k** ont déjà coûté **~{2}k tokens non cachés**. Évitez les allers-retours courts sur gros contexte : restez sur le modèle chaud (cache chaud `<5m` = modèle fixe) ou lancez `/handoff` pour ouvrir une nouvelle session avant de changer de palier.' -f $cd.modelSwitches, $ctxK2, $swK))
                 if (-not $NoSaveState) { Write-TokenOptimizerEvent -EventType "cost_watch" -SavedTokens 0 -ConversationId $convId -Details @{ milestone = $thrashKey } }
             }
         }

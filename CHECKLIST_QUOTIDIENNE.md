@@ -1,15 +1,15 @@
 # Checklist Quotidienne — Antigravity Token Optimizer
 
-> Référence rapide 1 page pour garder une consommation minimale sans perdre en qualité sur **Orchestrator**, **Neon** et **Hydrogen**.
+> Référence rapide 1 page pour garder une consommation minimale sans perdre en qualité sur **Gemini 4 Hydrogen** et **Neon** (*éviter Orchestrator sur les sessions longues*).
 
 ---
 
 ## 1. Choix du modèle en 10 secondes
 
-* **Tâche mécanique / simple** (renommage, doc, formatage, test unitaire isolé) $\rightarrow$ **Hydrogen (`low` / `medium`)**
-* **Travail quotidien** (feature, refactor multi-fichiers, bug standard) $\rightarrow$ **Orchestrator (Neon `medium` + Hydrogen)**
-* **Architecture, sécurité, concurrence, debug ardu** $\rightarrow$ **Neon (`high`)**
-* **Blocage persistant après échec en `high`** $\rightarrow$ **Neon (`xhigh`)** *(exceptionnel uniquement)*
+* **Tâche mécanique / simple** (Git, doc, renommage, formatage, vérifications rapides) $\rightarrow$ **Gemini 4 Hydrogen (`Low`)**
+* **Travail quotidien (défaut code)** (éditer des scripts/UI, feature, bug standard, debug) $\rightarrow$ **Gemini 4 Hydrogen (`Medium`)**
+* **Architecture, planification ou blocage complexe** $\rightarrow$ **Gemini 4 Neon (`Medium`)**
+* **Sessions longues (> 15–25 tours)** : éviter **Orchestrator** (ses bascules internes cassent le cache) et préférer un modèle fixe.
 
 ---
 
@@ -25,7 +25,7 @@
 - [ ] **Sorties CLI silencieuses :** Vérifier que les tests/builds tournent avec `-q` / `--quiet` ou limités aux dernières lignes d'erreur.
 - [ ] **Exploration lourde ou navigation web :** Laisser un **subagent** (`research` ou `browser` sur `flash`) isoler le bruit.
 - [ ] **Piste risquée / expérimentale :** Lancer **`/fork`** avant de tester, puis **`/resume`** si la piste est mauvaise.
-- [ ] **Session qui s'allonge :** Exécuter **`/compact`** dès que le fil dépasse 10–15 échanges chargés.
+- [ ] **Session qui s'allonge :** Exécuter **`/handoff`** dès les jalons `15/25/40` tours ou `60k/85k` tokens pour repartir sur un fil propre (au lieu de `/compact`).
 
 ### Fin de tâche
 - [ ] **1 tâche validée = Nouvelle session** pour la tâche suivante (coupe l'effet boule de neige).

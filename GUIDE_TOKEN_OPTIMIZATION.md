@@ -1,6 +1,6 @@
-# Guide Complet : Économiser des Tokens sur Google Antigravity (Neon, Hydrogen & Orchestrator)
+# Guide Complet : Économiser des Tokens sur Google Antigravity (Hydrogen & Neon)
 
-Ce guide recense les **meilleures méthodes éprouvées** pour réduire drastiquement votre consommation de tokens (et préserver vos quotas) sur **Google Antigravity** avec la famille **Gemini 4** (`Neon`, `Hydrogen`, et le mode `Orchestrator`), tout en conservant **un maximum de performance et de fiabilité**.
+Ce guide recense les **meilleures méthodes éprouvées** pour réduire drastiquement votre consommation de tokens (et préserver vos quotas) sur **Google Antigravity** avec la famille **Gemini 4** (`Hydrogen` et `Neon`), tout en conservant **un maximum de performance et de fiabilité**.
 
 ---
 
@@ -12,9 +12,9 @@ Avant d'optimiser, il faut comprendre **ce qui coûte réellement des tokens** d
 
 | Modèle / Mode | Rôle optimal | Input (1M tokens) | Output (1M tokens) | Input mis en cache | Gain / Impact |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| **Gemini 4 Hydrogen** | Exécution rapide, éditions bornées, tests, scripts | \$1.50 | \$7.50 | — | 2× moins cher que Neon (dispo aussi sur les tiers gratuits) |
-| **Gemini 4 Neon** | Planification, architecture, revue, debug complexe | \$3.00 | \$15.00 | **\$0.15 (-95%)** | Raisonnement frontier (`low` à `xhigh`) |
-| **Orchestrator (Neon + Hydrogen)** | Workflow quotidien par défaut | Routage dynamique | Routage dynamique | Inclus | **~ -24% de consommation** à qualité quasi identique |
+| **Gemini 4 Hydrogen** | Défaut quotidien (`Medium` pour coder, `Low` pour le mécanique) | \$1.50 | \$7.50 | — | 2× moins cher que Neon (dispo aussi sur les tiers gratuits) |
+| **Gemini 4 Neon** | Planification, architecture, revue, blocage complexe (`Medium`) | \$3.00 | \$15.00 | **\$0.15 (-95%)** | Raisonnement frontier (`low` à `xhigh`) |
+| **Orchestrator (Neon + Hydrogen)** | Tâches courtes uniquement *(à éviter sur les sessions longues)* | Routage dynamique | Routage dynamique | Inclus | Ses bascules internes cassent le cache > 40k tokens |
 
 ### Trois règles économiques majeures
 
@@ -34,12 +34,11 @@ Sur Gemini 4, le caching de contexte est **automatique et implicite** dès qu'un
 * **Règle d'or — Préfixe 100% statique :** Placez tout ce qui ne change pas au **tout début** du contexte (instructions système, `GEMINI.md`, documentation de référence, schémas stables) et rejetez tout élément dynamique (date/heure, timestamps, UUID, état runtime, logs variables) à la **fin**. Un seul timestamp qui change en début de prompt invalide tout le cache !
 * **Supprimez le cache explicite hérité (SDK/API) :** Les appels `client.caches.create()` et `cached_content=...` (Gemini 2.5 / 3.x) sont **dépréciés sur Gemini 4** et renvoient une erreur **HTTP 400** sur Neon et Hydrogen. Laissez le caching implicite travailler sans frais de stockage horaire.
 
-### 2) Utiliser `Orchestrator (Neon + Hydrogen)` par défaut
-**Orchestrator** n'est pas un modèle séparé, mais un routeur multi-modèle natif d'Antigravity :
-* **Neon** (planificateur) explore le problème, conçoit le plan et vérifie la logique critique.
-* **Hydrogen** (exécuteur) applique les éditions de fichiers, lance les commandes, exécute les tests et itère sur les petites corrections.
-* **Escalade propre :** Si Hydrogen bloque après une erreur de logique ou de conception, la main remonte à Neon pour corriger le plan.
-* **Résultat :** Qualité proche de 100% Neon seul, avec environ **24% d'économie de quota** et une latence réduite.
+### 2) Garder un modèle fixe par session (`1 session = 1 modèle`)
+* **Pour coder :** utilisez **`Gemini 4 Hydrogen (Medium)`** par défaut (scripts, UI, features, debug).
+* **Pour le mécanique :** utilisez **`Gemini 4 Hydrogen (Low)`** (Git, documentation, formatage, vérifications rapides).
+* **Évitez `Orchestrator` sur les sessions longues :** ses bascules internes entre modèles cassent le préfixe de cache implicite dès que le contexte dépasse ~40k tokens.
+* **Escalade propre :** en cas de blocage architectural complexe, lancez **`/handoff`** et ouvrez une nouvelle session sur **`Gemini 4 Neon (Medium)`**.
 
 ### 3) Filtrer le workspace avec `.antigravityignore`
 Antigravity scanne et indexe votre espace de travail. Sans filtrage, les dépendances, builds et lockfiles consomment des dizaines de milliers de tokens en arrière-plan.
@@ -95,14 +94,14 @@ Sur Gemini 4, `Hydrogen` et `Neon` utilisent par défaut `high` (`Neon` supporte
 
 | Type de tâche | Modèle recommandé | Thinking Effort | Pourquoi |
 | :--- | :--- | :---: | :--- |
-| Boilerplate, renommages, docs, formatage, tests simples | **Hydrogen** | `low` / `medium` | Coût minimal, vitesse maximale, zéro besoin de sur-réflexion |
-| Développement quotidien, features multi-fichiers, refactoring, bugs courants | **Orchestrator (Neon + Hydrogen)** | `medium` (Neon) | **Meilleur ROI global** : plan solide + exécution rapide (-24%+) |
-| Architecture système, sécurité, concurrence, migrations critiques | **Neon** (ou Orchestrator) | `high` | Jugement frontier sans payer la sur-réflexion `xhigh` |
-| Bug bloquant complexe après échec en `high` | **Neon** | `xhigh` | Dernier recours ciblé uniquement |
+| Tâches mécaniques : Git, docs, renommages, vérifications rapides | **Hydrogen** | `low` | Coût minimal, vitesse maximale, zéro besoin de sur-réflexion |
+| Développement quotidien (défaut) : coder, éditer scripts/UI, déboguer | **Hydrogen** | `medium` | **Meilleur ROI global** : rapide, fiable, cache stable sur toute la session |
+| Planification, architecture système, ou blocage complexe après échec | **Neon** | `medium` | Jugement frontier ciblé (ouvrir via `/handoff`, éviter `Orchestrator` sur sessions longues) |
+| Bug critique exceptionnel après échec en `Medium` | **Neon** | `high` | Dernier recours ciblé uniquement |
 
-### 10) Gérer le contexte comme de la RAM : Sessions fraîches, `/compact`, `/fork`
+### 10) Gérer le contexte comme de la RAM : Sessions fraîches, `/handoff`, `/fork`
 * **1 tâche = 1 session :** Dès qu'une feature ou un bug est terminé et validé, ouvrez une **nouvelle conversation**. Ne traînez pas l'historique d'hier sur la tâche d'aujourd'hui.
-* **`/compact` en milieu de session :** Si une conversation s'allonge mais doit continuer, utilisez `/compact` pour résumer l'historique et purger les anciens outputs d'outils.
+* **`/handoff` aux seuils `15/25/40` tours ou `60k/85k` tokens :** Dès qu'une conversation dépasse ces jalons (ou après > 5 min d'inactivité sur > 50k tokens), lancez `/handoff` pour sauvegarder l'état dans `.agents/STATUS.md` (< 400 tokens) et repartir sur un fil neuf (remplace `/compact`).
 * **`/fork` + `/resume` :** Avant une tentative risquée ou exploratoire, lancez `/fork`. Si l'approche échoue, revenez sur la session d'origine avec `/resume` sans avoir pollué son contexte avec des impasses.
 
 ### 11) Éliminer le bruit en sortie (Anti-Fluff & Micro-Diffs)
@@ -128,7 +127,7 @@ Antigravity permet d'intercepter le cycle de vie de l'agent via `.agents/hooks.j
 
 ## 5. Anti-patterns à éviter (Les fausses économies qui coûtent PLUS cher)
 
-1. **Sous-dimensionner le modèle :** Envoyer `Hydrogen Low` sur un problème d'architecture ou un bug subtil mène à 4 ou 5 boucles d'échec, ce qui consomme **2× à 3× plus de tokens** qu'un passage direct par `Orchestrator` ou `Neon`.
+1. **Sous-dimensionner ou casser le cache :** Envoyer `Hydrogen Low` sur un problème d'architecture ou laisser `Orchestrator` basculer de modèle sur une session longue (> 40k) consomme **2× à 3× plus de tokens** qu'une session fixe bien calibrée (`Hydrogen Medium` ou `Neon Medium`).
 2. **Supprimer les règles utiles pour raccourcir `GEMINI.md` :** Un `GEMINI.md` trop vague provoque des erreurs de convention que vous devrez corriger sur plusieurs tours.
 3. **Casser le cache préfixe :** Mettre l'heure courante, un compteur ou des données volatiles en haut de `GEMINI.md` ou du prompt système annule les **-95% de remise cache** sur Neon.
 4. **Micro-lectures répétées :** Lire un fichier de 250 lignes en 5 appels de 50 lignes génère 5 tours d'API (et 5× le ré-envoi du contexte) au lieu d'un seul appel.
@@ -138,7 +137,7 @@ Antigravity permet d'intercepter le cycle de vie de l'agent via `.agents/hooks.j
 
 ## 6. Plan d'action d'implémentation (en 4 étapes)
 
-1. **Quick Wins (10 min) :** Passez par défaut sur **Orchestrator (Neon Medium + Hydrogen)**, désactivez les MCP globaux inutilisés et copiez `templates/.antigravityignore` à la racine de vos projets.
+1. **Quick Wins (10 min) :** Passez par défaut sur **`Gemini 4 Hydrogen (Medium)`** pour coder (**`Low`** pour le mécanique), désactivez les MCP globaux inutilisés et copiez `templates/.antigravityignore` à la racine de vos projets.
 2. **Socle Projet (15 min) :** Adaptez `templates/GEMINI.md` (< 2 KB) à votre stack et vos commandes de test silencieuses.
 3. **Workflow Équipe (30 min) :** Déplacez vos procédures répétitives dans `.agents/skills/` et scopez vos règles spécialisées dans `.agents/rules/` (`model_decision` ou glob).
-4. **Hygiène & Automatisation (Continu) :** Appliquez la [CHECKLIST_QUOTIDIENNE.md](./CHECKLIST_QUOTIDIENNE.md) (mentions `@`, sessions fraîches, `/compact`, `/fork`, délégation `research`/`browser`) et utilisez le plugin `token-optimizer` (ou `.agents/hooks.json`).
+4. **Hygiène & Automatisation (Continu) :** Appliquez la [CHECKLIST_QUOTIDIENNE.md](./CHECKLIST_QUOTIDIENNE.md) (mentions `@`, sessions fraîches, `/handoff` aux seuils `15/25/40` tours / `60k/85k` tok, `/fork`, délégation `research`/`browser`) et utilisez le plugin `token-optimizer` (ou `.agents/hooks.json`).

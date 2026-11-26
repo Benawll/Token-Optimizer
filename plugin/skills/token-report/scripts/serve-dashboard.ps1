@@ -229,6 +229,7 @@ function Get-LiveCachePayload {
 
 $listener = New-Object System.Net.HttpListener
 $listener.Prefixes.Add($baseUrl)
+$listener.IgnoreWriteExceptions = $true
 $listener.Start()
 
 if (-not $NoOpen) {
@@ -266,11 +267,19 @@ try {
                 $resp.OutputStream.Write($bytes, 0, $bytes.Length)
             }
             elseif ($path -eq "/api/refresh") {
-                & $genScript -Latest $Latest -OutputPath $DashboardPath | Out-Null
-                $json = ([ordered]@{ ok = $true; refreshedAt = (Get-Date).ToString("HH:mm:ss") }) | ConvertTo-Json -Compress
+                try {
+                    & $genScript -Latest $Latest -OutputPath $DashboardPath | Out-Null
+                    $script:LiveTranscriptCache.Clear()
+                    $json = ([ordered]@{ ok = $true; refreshedAt = (Get-Date).ToString("HH:mm:ss") }) | ConvertTo-Json -Compress
+                    $resp.StatusCode = 200
+                }
+                catch {
+                    $json = ([ordered]@{ ok = $false; error = $_.Exception.Message }) | ConvertTo-Json -Compress
+                    $resp.StatusCode = 500
+                }
                 $bytes = [System.Text.Encoding]::UTF8.GetBytes($json)
-                $resp.StatusCode = 200
                 $resp.ContentType = "application/json; charset=utf-8"
+                $resp.Headers.Add("Cache-Control", "no-store")
                 $resp.OutputStream.Write($bytes, 0, $bytes.Length)
             }
             elseif ($path -eq "/api/stop") {
@@ -284,6 +293,9 @@ try {
             else {
                 $resp.StatusCode = 404
             }
+        }
+        catch {
+            # Ignore client disconnect / aborted connection errors
         }
         finally {
             try { $resp.Close() } catch {}
