@@ -49,6 +49,10 @@ try {
             $len = (Get-Item $p).Length
             if ($len -gt 24000) { $alerts.Add(('`{0}` dépasse 24 KB ({1} o) et sera tronqué par Antigravity.' -f $rf, $len)) }
             elseif ($len -gt 4096) { $alerts.Add(('`{0}` fait {1} o (> 4 KB recommandés) ; déplacez les procédures longues dans `.agents/skills/`.' -f $rf, $len)) }
+            $headTxt = (Get-Content $p -TotalCount 15 -ErrorAction SilentlyContinue) -join "`n"
+            if ($headTxt -match '(?i)(\b20\d{2}-\d{2}-\d{2}\b|current time|last updated\s*:|uuid)') {
+                $alerts.Add(('`{0}` contient une donnée dynamique (date/heure/UUID) en en-tête : cela invalide 100 % du cache de préfixe à chaque tour.' -f $rf))
+            }
         }
     }
 
@@ -65,11 +69,15 @@ try {
                     $alerts.Add(('MCP 3D/Unity actifs inutilement (`{0}`) — profil `minimal` recommandé via **token-mcp**.' -f ($unusedHeavy -join ', ')))
                 }
             }
+            if ($activeMcp.Count -gt 2) {
+                $alerts.Add(('{0} serveurs MCP actifs (`{1}`) injectent leurs schémas JSON à chaque tour — désactivez les MCP dormants via **token-mcp**.' -f $activeMcp.Count, ($activeMcp -join ', ')))
+            }
         }
     }
 
     if ($alerts.Count -eq 0) { Write-Output '{}'; exit 0 }
 
+    Write-TokenOptimizerEvent -EventType "session_audit" -SavedTokens 0 -Details @{ alerts = $alerts.Count }
     $md = "**Token Optimizer — Audit automatique (0 token modèle)**`n- " + ($alerts -join "`n- ")
     @{
         injectSteps = @(@{ systemMessage = @{ systemMessage = ""; metadata = @{ user_markdown = $md } } })

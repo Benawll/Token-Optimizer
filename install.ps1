@@ -32,6 +32,25 @@ Get-ChildItem -Path $sourceDir -Filter "*.ps1" -Recurse -File | ForEach-Object {
     }
 }
 
+# Persister la date de première installation sans jamais l'écraser lors des mises à jour
+$configRoot = Join-Path $env:USERPROFILE ".gemini\config"
+$metaPath = Join-Path $configRoot "token-optimizer-meta.json"
+$existingPluginJson = Join-Path $TargetDir "plugin.json"
+if (-not (Test-Path $metaPath)) {
+    if (-not (Test-Path $configRoot)) {
+        New-Item -ItemType Directory -Path $configRoot -Force | Out-Null
+    }
+    $initialUtc = if (Test-Path $existingPluginJson) {
+        (Get-Item $existingPluginJson).CreationTimeUtc
+    } else {
+        (Get-Date).ToUniversalTime()
+    }
+    $metaJson = [ordered]@{
+        installedAtUtc = $initialUtc.ToString("o")
+    } | ConvertTo-Json
+    [System.IO.File]::WriteAllText($metaPath, $metaJson, [System.Text.UTF8Encoding]::new($false))
+}
+
 if (Test-Path $TargetDir) {
     Remove-Item -Path $TargetDir -Recurse -Force
 }

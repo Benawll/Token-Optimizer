@@ -3,590 +3,1831 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Token Optimizer — Tableau de Bord Économies</title>
+<title>Token Optimizer — Télémétrie & Empreinte</title>
 <style>
   :root {
-    --bg: #0b1120;
-    --card: #151f32;
-    --text: #f1f5f9;
-    --muted: #94a3b8;
-    --accent: #38bdf8;
-    --emerald: #10b981;
-    --amber: #f59e0b;
-    --purple: #a855f7;
-    --border: #24324d;
-    --tab-active: #0284c7;
+    --bg: #0b0c0f;
+    --surface: #12141a;
+    --surface-2: #171a22;
+    --border: #222631;
+    --border-strong: #313746;
+    --ink: #edeef0;
+    --ink-2: #9ca3af;
+    --ink-3: #68707d;
+    --sage: #4fa87e;
+    --sage-bg: rgba(79, 168, 126, 0.11);
+    --sage-bd: rgba(79, 168, 126, 0.28);
+    --ochre: #c9945b;
+    --ochre-bg: rgba(201, 148, 91, 0.11);
+    --ochre-bd: rgba(201, 148, 91, 0.28);
+    --steel: #74859e;
+    --steel-bg: rgba(116, 133, 158, 0.10);
+    --steel-bd: rgba(116, 133, 158, 0.24);
+    --terra: #c96b63;
+    --terra-bg: rgba(201, 107, 99, 0.11);
+    --terra-bd: rgba(201, 107, 99, 0.28);
+    --stone: #323745;
   }
+
   * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
   body {
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    margin: 0;
-    padding: 24px;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
     line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
   }
-  .header {
+  .num { font-variant-numeric: tabular-nums; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+
+  .wrap {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+  }
+
+  /* Header */
+  .topbar {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 20px;
     border-bottom: 1px solid var(--border);
-    padding-bottom: 16px;
     margin-bottom: 20px;
     flex-wrap: wrap;
-    gap: 12px;
   }
-  h1 { margin: 0 0 4px; font-size: 24px; font-weight: 700; color: #fff; }
-  .badge-env {
-    display: inline-block;
-    background: rgba(16, 185, 129, 0.15);
-    color: var(--emerald);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .badge-pro {
-    display: inline-block;
-    background: rgba(56, 189, 248, 0.15);
-    color: #38bdf8;
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-left: 6px;
-  }
-  .sub { color: var(--muted); margin: 0; font-size: 13px; }
-  
-  /* Tabs */
-  .tabs-nav {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 20px;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 10px;
-  }
-  .tab-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--muted);
-    padding: 10px 18px;
+  .brand { display: flex; align-items: flex-start; gap: 12px; }
+  .brand-mark {
+    width: 34px; height: 34px;
+    border: 1px solid var(--border-strong);
     border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    transition: all .2s;
+    background: var(--surface);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
   }
-  .tab-btn:hover { background: var(--card); color: #fff; }
-  .tab-btn.active {
-    background: var(--tab-active);
-    color: #fff;
-    border-color: var(--tab-active);
-    box-shadow: 0 0 12px rgba(2, 132, 199, 0.4);
+  .brand h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    color: var(--ink);
   }
-  
-  .tab-content { display: none; }
-  .tab-content.active { display: block; }
+  .brand .meta {
+    margin: 3px 0 0;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
 
-  /* Filters */
-  .filter-bar {
-    background: var(--card);
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .seg {
+    display: inline-flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .seg-btn {
+    background: transparent;
+    border: none;
+    color: var(--ink-2);
+    padding: 5px 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 550;
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .seg-btn:hover { color: var(--ink); }
+  .seg-btn.active {
+    background: var(--surface-2);
+    color: var(--ink);
+    border: 1px solid var(--border-strong);
+    padding: 4px 10px;
+  }
+
+  /* Live Subscription & Quota Strip */
+  .quota-strip {
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
+    padding: 14px 18px;
+    margin-bottom: 16px;
+    display: grid;
+    grid-template-columns: 1.15fr 1.3fr 0.9fr;
+    gap: 18px;
     align-items: center;
-    font-size: 13px;
   }
-  .filter-group { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .filter-group span { color: var(--muted); font-weight: 600; text-transform: uppercase; font-size: 11px; }
-  .btn-pill {
-    background: rgba(255,255,255,0.05);
+  .q-block { display: flex; flex-direction: column; gap: 6px; }
+  .q-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .tier-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .pill-select {
+    background: var(--bg);
     border: 1px solid var(--border);
-    color: var(--text);
-    padding: 5px 12px;
-    border-radius: 20px;
+    color: var(--ink-2);
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+  .pill-select:hover { border-color: var(--border-strong); color: var(--ink); }
+  .mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 6px;
+    border: 1px solid;
+  }
+  .mode-badge.within { background: var(--sage-bg); color: var(--sage); border-color: var(--sage-bd); }
+  .mode-badge.over { background: var(--terra-bg); color: var(--terra); border-color: var(--terra-bd); }
+  .mode-badge.unknown { background: var(--steel-bg); color: var(--steel); border-color: var(--steel-bd); }
+
+  .meter-pair { display: flex; flex-direction: column; gap: 7px; }
+  .meter-row { display: flex; flex-direction: column; gap: 3px; }
+  .meter-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-2); }
+  .meter-head strong { color: var(--ink); font-weight: 600; }
+  .meter-track {
+    height: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+  .meter-fill { height: 100%; border-radius: 99px; background: var(--sage); transition: width .25s ease; }
+  .meter-fill.warn { background: var(--ochre); }
+  .meter-fill.crit { background: var(--terra); }
+  .q-note { font-size: 11.5px; color: var(--ink-3); line-height: 1.38; }
+
+  /* Filter Bar */
+  .filter-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 16px;
+    margin-bottom: 20px;
+  }
+  .filter-groups { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+  .fg { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .fg-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-3);
+    font-weight: 600;
+    margin-right: 4px;
+  }
+  .f-pill {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-2);
+    padding: 4px 10px;
+    border-radius: 99px;
     font-size: 12px;
     cursor: pointer;
     transition: all .15s;
   }
-  .btn-pill:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--accent); }
-  .btn-pill.active {
-    background: var(--accent);
-    color: #0b1120;
-    border-color: var(--accent);
-    font-weight: 700;
+  .f-pill:hover { border-color: var(--border-strong); color: var(--ink); }
+  .f-pill.active {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+    font-weight: 600;
   }
+  .scope-count { font-size: 12px; color: var(--ink-3); }
 
-  .banner-explanation {
-    background: rgba(56, 189, 248, 0.08);
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    font-size: 13px;
-    color: #bae6fd;
-    line-height: 1.4;
-  }
-
-  /* KPI Grid */
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 24px; }
-  .card {
-    background: var(--card);
+  /* Hero Editorial Section */
+  .hero {
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
+    padding: 24px 26px;
+    margin-bottom: 18px;
+    display: grid;
+    grid-template-columns: 1.15fr 1fr;
+    gap: 28px;
+    align-items: center;
+  }
+  .hero-kicker {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-3);
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .hero-stat-row {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .hero-num {
+    font-size: 46px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: var(--sage);
+  }
+  .hero-num.neutral { color: var(--ochre); }
+  .hero-subnum {
+    font-size: 15px;
+    font-weight: 550;
+    color: var(--ink-2);
+  }
+  .hero-sentence {
+    font-size: 14.5px;
+    color: var(--ink-2);
+    margin: 0 0 12px;
+    line-height: 1.55;
+  }
+  .hero-sentence strong { color: var(--ink); font-weight: 600; }
+  .hero-scale-box {
+    display: inline-block;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  .hero-scale-box strong { color: var(--sage); font-weight: 600; }
+  .hero-visual {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
     padding: 16px 18px;
+  }
+  .hero-vis-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: var(--ink-2);
+  }
+  .dot {
+    display: inline-block;
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+
+  /* Grid 4 Mechanisms */
+  .grid-4 {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-title {
+    font-size: 11.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-3);
+    font-weight: 600;
+  }
+  .tag-soft {
+    font-size: 10.5px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    color: var(--ink-3);
+    font-weight: 550;
+    white-space: nowrap;
+  }
+  .tag-soft.sage { color: var(--sage); border-color: var(--sage-bd); background: var(--sage-bg); }
+  .tag-soft.steel { color: var(--steel); border-color: var(--steel-bd); background: var(--steel-bg); }
+  .card-val {
+    font-size: 26px;
+    font-weight: 680;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    line-height: 1.15;
+  }
+  .card-val.sage { color: var(--sage); }
+  .card-val.ochre { color: var(--ochre); }
+  .card-val.steel { color: var(--steel); }
+  .card-foot { font-size: 12px; color: var(--ink-3); line-height: 1.4; }
+  .card-foot strong { color: var(--ink-2); font-weight: 600; }
+
+  /* Excluded Context Cards (Model Advisor + Google Native Cache) */
+  .grid-2-equal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .advisor-card {
+    background: var(--surface);
+    border: 1px dashed var(--border-strong);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .advisor-disclaimer {
+    font-size: 12px;
+    color: var(--ink-3);
+    margin: 6px 0 10px;
+    line-height: 1.45;
+  }
+
+  /* Charts Row */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.45fr 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .chart-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
     position: relative;
-    overflow: hidden;
   }
-  .card::before {
-    content: '';
+  .panel-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .panel-sub {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .svg-wrap { width: 100%; overflow: hidden; }
+  .tooltip-box {
     position: absolute;
-    top: 0; left: 0; right: 0; height: 3px;
-    background: var(--border);
+    pointer-events: none;
+    background: #1a1e28;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 8px 11px;
+    font-size: 12px;
+    color: var(--ink);
+    display: none;
+    z-index: 20;
+    min-width: 170px;
   }
-  .card.plugin-gain::before { background: linear-gradient(90deg, #10b981, #38bdf8); }
-  .card.plugin-cli::before { background: linear-gradient(90deg, #38bdf8, #818cf8); }
-  .card.plugin-spent::before { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-  .card.google-cache::before { background: linear-gradient(90deg, #a855f7, #6366f1); }
-  
-  .k { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 600; letter-spacing: .04em; }
-  .v { font-size: 28px; font-weight: 800; margin-top: 6px; color: #fff; }
-  .v.gain { color: var(--emerald); }
-  .v.cli { color: var(--accent); }
-  .v.spent { color: var(--amber); }
-  .v.cache { color: #c084fc; font-size: 24px; }
-  .hint { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .comp-row {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: center;
+    padding: 9px 0;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+  .comp-row:first-child { border-top: none; }
 
   /* Tables */
-  h2 { font-size: 16px; margin: 24px 0 10px; color: #fff; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: var(--card);
+  .section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin: 24px 0 10px;
+  }
+  .section-head h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .section-head span { font-size: 12px; color: var(--ink-3); }
+
+  .table-wrap {
+    background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 24px;
-    font-size: 13px;
+    overflow-x: auto;
+    margin-bottom: 22px;
   }
-  th, td { padding: 10px 14px; border-bottom: 1px solid var(--border); text-align: left; }
-  th { background: rgba(11, 17, 32, 0.6); color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; }
-  tr:hover td { background: rgba(255, 255, 255, 0.02); }
-  code { background: rgba(56, 189, 248, 0.12); padding: 2px 6px; border-radius: 4px; color: #7dd3fc; font-size: 12px; }
-  .tag-proj {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td {
+    padding: 9px 10px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th {
     font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink-3);
     font-weight: 600;
-    background: rgba(56, 189, 248, 0.15);
-    color: #7dd3fc;
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: var(--bg);
   }
-  
-  .badge-status {
+  tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface-2); }
+  td.wrap-cell { white-space: normal; max-width: 340px; }
+
+  .st-badge {
     display: inline-block;
-    padding: 2px 8px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 11px;
+    font-weight: 550;
+    border: 1px solid;
+  }
+  .st-active { background: var(--sage-bg); color: var(--sage); border-color: var(--sage-bd); }
+  .st-mixed  { background: var(--ochre-bg); color: var(--ochre); border-color: var(--ochre-bd); }
+  .st-before { background: rgba(255,255,255,0.03); color: var(--ink-3); border-color: var(--border); }
+
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  .method-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: 10px;
-    font-size: 11px;
-    font-weight: 600;
+    padding: 18px 20px;
+    font-size: 13px;
+    color: var(--ink-2);
+    line-height: 1.6;
   }
-  .badge-status.active {
-    background: rgba(16, 185, 129, 0.15);
-    color: #34d399;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+  .method-box h3 { margin: 0 0 8px; font-size: 14px; color: var(--ink); }
+  .method-box ul { margin: 8px 0 0; padding-left: 18px; }
+
+  @media (max-width: 980px) {
+    .quota-strip, .hb-strip, .hero, .charts-row, .grid-2-equal { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   }
-  .badge-status.past {
-    background: rgba(148, 163, 184, 0.12);
-    color: #94a3b8;
-    border: 1px solid rgba(148, 163, 184, 0.2);
+  /* Highbeam Live Cache Monitor Strip */
+  .hb-strip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    margin-bottom: 14px;
+    display: grid;
+    grid-template-columns: 1.2fr 1.4fr 0.7fr;
+    gap: 18px;
+    align-items: center;
   }
-  .eur-plugin-gain { color: var(--emerald); font-weight: 700; }
-  .eur-cache-passive { color: #a855f7; font-weight: 500; }
+  .hb-live-dot {
+    display: inline-block; width: 7px; height: 7px; border-radius: 50%;
+    background: var(--steel); margin-right: 5px; vertical-align: middle;
+  }
+  .hb-live-dot.live { background: var(--sage); }
+  .hb-timer {
+    font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; color: var(--sage);
+  }
+  .hb-timer.warn { color: var(--ochre); }
+  .hb-timer.crit { color: var(--terra); }
+  .hb-actions { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 560px) {
+    .grid-4 { grid-template-columns: 1fr; }
+    .wrap { padding: 18px 14px 48px; }
+  }
 </style>
 </head>
 <body>
+<div class="wrap">
 
-  <div class="header">
-    <div>
-      <h1>Token Optimizer — Tableau de Bord Économies</h1>
-      <p class="sub">Fuseau horaire : <strong>Europe/Paris (UTC+1)</strong> — Plugin installé le <strong>25/11/2026 à 21:51</strong> — Généré à __GEN_DATE__</p>
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <path d="M13 3L5 14H12L10 21L19 10H12L13 3Z" stroke="#4fa87e" stroke-width="1.8" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1 id="txt-title">Token Optimizer</h1>
+        <p class="meta" id="txt-subtitle">Chargement...</p>
+      </div>
     </div>
-    <div>
-      <span class="badge-env">Devise : EUR (€)</span>
-      <span class="badge-pro">Formule : Abonnement Pro</span>
+
+    <div class="controls">
+      <div class="seg" role="tablist">
+        <button class="seg-btn active" id="tab-btn-overview" onclick="switchTab('overview', this)">Vue d'ensemble</button>
+        <button class="seg-btn" id="tab-btn-tech" onclick="switchTab('tech', this)">Technique & Méthodo</button>
+      </div>
+      <div class="seg" aria-label="Unit selector">
+        <button class="seg-btn active" id="unit-tokens" onclick="setUnit('tokens', this)">Tokens</button>
+        <button class="seg-btn" id="unit-eur" onclick="setUnit('eur', this)">EUR</button>
+        <button class="seg-btn" id="unit-usd" onclick="setUnit('usd', this)">USD</button>
+      </div>
+      <div class="seg" aria-label="Language selector">
+        <button class="seg-btn active" id="lang-fr" onclick="setLang('fr', this)">FR</button>
+        <button class="seg-btn" id="lang-en" onclick="setLang('en', this)">EN</button>
+      </div>
     </div>
+  </header>
+
+  <!-- HIGHBEAM LIVE CACHE MONITOR -->
+  <section class="hb-strip" id="highbeam-strip">
+    <div class="q-block">
+      <div class="q-label">
+        <span><span id="hb-dot" class="hb-live-dot"></span><span id="hb-mode-lbl">MONITEUR CACHE (HIGHBEAM)</span></span>
+        <span id="hb-ctx-pill" class="mono">-</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span class="mono" id="hb-model-lock" style="color:var(--ink); font-weight:600;">-</span>
+        <span class="tag-soft" id="hb-rule-tag">1 session = 1 modèle</span>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">
+        <span id="hb-cliff-title">Falaise Cache Implicite (5:00)</span>
+        <span id="hb-status-txt" style="text-transform:none; letter-spacing:0;">-</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <div class="hb-timer num" id="hb-timer">05:00</div>
+        <div class="meter-track" style="flex:1;"><div class="meter-fill" id="hb-bar" style="width:100%"></div></div>
+      </div>
+    </div>
+
+    <div class="hb-actions">
+      <button class="f-pill" id="hb-sound-btn" onclick="toggleCliffSound(this)" title="Bip doux sous 1 min">Son &lt; 1m : OFF</button>
+      <button class="f-pill" id="hb-refresh-btn" onclick="refreshLiveDashboard(this)">Rafraîchir</button>
+    </div>
+  </section>
+
+  <!-- LIVE QUOTA & SUBSCRIPTION STRIP -->
+  <section class="quota-strip" id="quota-strip">
+    <div class="q-block">
+      <div class="q-label">
+        <span id="txt-plan-label">Abonnement & Mode</span>
+        <span id="q-credits-pill" class="mono"></span>
+      </div>
+      <div class="tier-row">
+        <select id="tier-select" class="pill-select" onchange="setTierOverride(this.value)" title="Plan Antigravity">
+          <option value="auto">Plan : Auto</option>
+          <option value="free">Plan : Free</option>
+          <option value="plus">Plan : Plus</option>
+          <option value="pro">Plan : Pro</option>
+          <option value="ultra">Plan : Ultra</option>
+        </select>
+        <select id="mode-select" class="pill-select" onchange="setModeOverride(this.value)" title="Mode de calcul">
+          <option value="auto">Calcul : Auto</option>
+          <option value="within">Calcul : Sous forfait (%)</option>
+          <option value="overusage">Calcul : Overusage (€ / Crédits)</option>
+        </select>
+      </div>
+      <div id="mode-status-badge" class="mode-badge within"></div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">
+        <span id="txt-live-quota-label">Quotas Live Gemini (agy CLI)</span>
+        <span id="q-reset-hint" class="mono"></span>
+      </div>
+      <div class="meter-pair">
+        <div class="meter-row">
+          <div class="meter-head">
+            <span id="txt-5h-label">Fenêtre 5 heures</span>
+            <strong class="num" id="q-5h-val">-</strong>
+          </div>
+          <div class="meter-track"><div class="meter-fill" id="q-5h-bar" style="width:0%"></div></div>
+        </div>
+        <div class="meter-row">
+          <div class="meter-head">
+            <span id="txt-weekly-label">Cycle Hebdomadaire</span>
+            <strong class="num" id="q-wk-val">-</strong>
+          </div>
+          <div class="meter-track"><div class="meter-fill" id="q-wk-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="q-block">
+      <div class="q-label">
+        <span id="txt-quota-rule-label">Mécanique des Quotas</span>
+      </div>
+      <div class="q-note" id="txt-quota-note"></div>
+    </div>
+  </section>
+
+  <!-- FILTERS -->
+  <div class="filter-bar">
+    <div class="filter-groups">
+      <div class="fg" id="period-filters">
+        <span class="fg-title" id="txt-period-title">Période</span>
+        <button class="f-pill active" onclick="setPeriod('all', this)">Tout</button>
+        <button class="f-pill" onclick="setPeriod('7d', this)">7 jours</button>
+        <button class="f-pill" onclick="setPeriod('24h', this)">24h</button>
+        <button class="f-pill" onclick="setPeriod('5h', this)">5h</button>
+      </div>
+      <div class="fg" id="project-filters"></div>
+    </div>
+    <div class="scope-count num" id="scope-summary"></div>
   </div>
 
-  <div class="tabs-nav">
-    <button class="tab-btn active" onclick="switchTab('tab-roi', this)">💰 Économies Réelles du Plugin</button>
-    <button class="tab-btn" onclick="switchTab('tab-tech', this)">⚙️ Métriques Techniques & Modèles</button>
-  </div>
+  <!-- TAB 1 : OVERVIEW -->
+  <div id="pane-overview" class="tab-pane active">
 
-  <!-- ONGLET 1 : ÉCONOMIES RÉELLES DU PLUGIN -->
-  <div id="tab-roi" class="tab-content active">
-
-    <div class="banner-explanation" style="border-left: 4px solid var(--accent); background: rgba(56, 189, 248, 0.08); padding:14px 18px; margin-bottom:16px; border-radius:8px;">
-      <div style="font-weight:700; color:#fff; margin-bottom:4px; font-size:14px;">⚡ Préservation de ton Quota Journalier Pro</div>
-      <div style="font-size:13px; color:#cbd5e1; line-height:1.5;">
-        Sous abonnement Pro, tu ne paies pas de surfacturation au token : la valeur de Token Optimizer se mesure en <strong>marge de quota préservée</strong>. En aiguillant automatiquement tes tâches vers Flash Low/Medium au lieu de saturer ton compte sur Neon, le plugin a réduit l'empreinte de tes sessions de <strong id="pro-reduction-badge" style="color:var(--emerald);">-86,7 %</strong>, t'offrant <strong>~6,5x plus de requêtes par jour</strong> sans risquer de ralentissement ou de blocage quotidien.
+    <!-- HERO -->
+    <section class="hero">
+      <div>
+        <div class="hero-kicker" id="txt-hero-kicker">EMPREINTE MÉCANIQUE · À MODÈLE ÉGAL · HORS CACHE GOOGLE</div>
+        <div class="hero-stat-row">
+          <div class="hero-num num" id="hero-pct">-0,0 %</div>
+          <div class="hero-subnum num" id="hero-saved-sub">-</div>
+        </div>
+        <p class="hero-sentence" id="hero-sentence">-</p>
+        <div class="hero-scale-box num" id="hero-scale">-</div>
       </div>
+
+      <div class="hero-visual">
+        <div id="hero-bar-svg" class="svg-wrap"></div>
+        <div class="hero-vis-legend" id="hero-vis-legend"></div>
+      </div>
+    </section>
+
+    <!-- 4 ACTIVE MECHANISMS GRID -->
+    <section class="grid-4">
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title" id="m1-title">Garde-fou & CLI</span>
+          <span class="tag-soft sage" id="m1-tag">PreToolUse</span>
+        </div>
+        <div class="card-val sage num" id="m1-val">0</div>
+        <div class="card-foot" id="m1-foot">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title" id="m2-title">Bouclier Contexte & Règles</span>
+          <span class="tag-soft sage" id="m2-tag">Ignore · Outline</span>
+        </div>
+        <div class="card-val sage num" id="m2-val">-</div>
+        <div class="card-foot" id="m2-foot">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title" id="m3-title">Délestage Schémas MCP</span>
+          <span class="tag-soft sage" id="m3-tag">token-mcp</span>
+        </div>
+        <div class="card-val num" id="m3-val">-</div>
+        <div class="card-foot" id="m3-foot">-</div>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <span class="card-title" id="m4-title">Alertes & Boucles 0-Tok</span>
+          <span class="tag-soft sage" id="m4-tag">Hooks</span>
+        </div>
+        <div class="card-val num" id="m4-val">0</div>
+        <div class="card-foot" id="m4-foot">-</div>
+      </div>
+    </section>
+
+    <!-- CHARTS ROW -->
+    <section class="charts-row">
+      <div class="chart-panel">
+        <div class="panel-title">
+          <span id="c1-title">Consommation vs Estimation Sans Plugin par Session</span>
+          <span class="tag-soft" id="c1-unit">Tokens</span>
+        </div>
+        <p class="panel-sub" id="c1-sub">Chaque barre compare le volume réel sous plugin à son équivalent estimé sans les mécanismes Token Optimizer.</p>
+        <div id="chart-sessions" class="svg-wrap"></div>
+        <div id="chart-tooltip" class="tooltip-box"></div>
+      </div>
+
+      <div class="chart-panel">
+        <div class="panel-title">
+          <span id="c2-title">Comparatif Moyen / Tour (Avant vs Avec)</span>
+          <span class="tag-soft" id="c2-badge">Baseline</span>
+        </div>
+        <p class="panel-sub" id="c2-sub">Impact mesuré par tour à travers l'ensemble de votre historique.</p>
+        <div id="chart-comp"></div>
+      </div>
+    </section>
+
+    <!-- SEPARATED CONTEXTUAL INDICATORS (NOT COUNTED AS SAVINGS) -->
+    <section class="grid-2-equal">
+      <div class="advisor-card">
+        <div class="card-head">
+          <span class="card-title" id="adv-title">Aide au Choix de Modèle (Conseil uniquement)</span>
+          <span class="tag-soft steel" id="adv-tag">0 tok compté</span>
+        </div>
+        <p class="advisor-disclaimer" id="adv-desc">Règle indicative d'aiguillage (Flash / Hydrogen / Orchestrator). Non incluse dans les économies de tokens car vous restez maître du modèle choisi.</p>
+        <div id="advisor-mix-svg" class="svg-wrap"></div>
+      </div>
+
+      <div class="advisor-card">
+        <div class="card-head">
+          <span class="card-title" id="gcache-title">Cache Natif Google (Infrastructure Gemini)</span>
+          <span class="tag-soft steel" id="gcache-tag">Hors plugin</span>
+        </div>
+        <p class="advisor-disclaimer" id="gcache-desc">Mécanisme natif de Google exclu des gains Token Optimizer. Le plugin veille simplement à ne pas invalider votre préfixe par des lectures brutes.</p>
+        <div style="display:flex; gap:24px; align-items:baseline; flex-wrap:wrap; margin-top:6px;">
+          <div>
+            <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase;" id="gcache-post-lbl">Sous plugin</div>
+            <div class="card-val steel num" id="gcache-post-val">-</div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase;" id="gcache-pre-lbl">Avant plugin</div>
+            <div class="card-val num" style="font-size:20px; color:var(--ink-2);" id="gcache-pre-val">-</div>
+          </div>
+          <div>
+            <div style="font-size:11px; color:var(--ink-3); text-transform:uppercase;" id="gcache-delta-lbl">Écart</div>
+            <div class="num" style="font-size:16px; font-weight:600; color:var(--ink-2);" id="gcache-delta-val">-</div>
+          </div>
+        </div>
+        <div id="gcache-diag" class="q-note num" style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border);"></div>
+      </div>
+    </section>
+
+    <!-- PROJECT TABLE -->
+    <div class="section-head">
+      <h2 id="tbl-proj-title">Bilan par Projet</h2>
+      <span id="tbl-proj-sub">Recalculé selon la fenêtre temporelle sélectionnée</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th id="th-p-proj">Projet</th>
+            <th id="th-p-sess">Sessions</th>
+            <th id="th-p-turns">Tours (plugin)</th>
+            <th id="th-p-used">Consommé</th>
+            <th id="th-p-est">Estimé sans plugin</th>
+            <th id="th-p-saved">Évité (%)</th>
+            <th id="th-p-hooks">Hooks / Protections</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-projects"></tbody>
+      </table>
     </div>
 
-    <!-- Filtres -->
-    <div class="filter-bar">
-      <div class="filter-group">
-        <span>Période :</span>
-        <button class="btn-pill active" onclick="setPeriodFilter('all', this)">Toutes</button>
-        <button class="btn-pill" onclick="setPeriodFilter('today', this)">Aujourd'hui</button>
-        <button class="btn-pill" onclick="setPeriodFilter('24h', this)">Dernières 24h</button>
-        <button class="btn-pill" onclick="setPeriodFilter('7d', this)">7 derniers jours</button>
-      </div>
-      <div class="filter-group" id="project-filter-group">
-        <span>Projet :</span>
-        <button class="btn-pill active" onclick="setProjectFilter('all', this)">Tous</button>
-      </div>
+    <!-- SESSION TABLE -->
+    <div class="section-head">
+      <h2 id="tbl-sess-title">Historique des Sessions</h2>
+      <span id="tbl-sess-sub">Attribution tour par tour selon la date réelle d'activation</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th id="th-s-proj">Projet</th>
+            <th id="th-s-id">Session</th>
+            <th id="th-s-stat">Statut</th>
+            <th id="th-s-date">Dernière activité</th>
+            <th id="th-s-turns">Tours (plugin / tot)</th>
+            <th id="th-s-used">Consommé</th>
+            <th id="th-s-est">Estimé sans plugin</th>
+            <th id="th-s-pct">Gain mécanique</th>
+            <th id="th-s-cache">Cache Google (info)</th>
+            <th id="th-s-hooks">Interventions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-sessions"></tbody>
+      </table>
     </div>
 
-    <!-- KPIs Scindés -->
-    <div class="grid">
-      <div class="card plugin-gain">
-        <div class="k">Gain Net Token Optimizer (€)</div>
-        <div class="v gain" id="kpi-plugin-saved-eur">0,00 €</div>
-        <div class="hint" id="kpi-gain-hint">Économie d'arbitrage Flash vs Neon</div>
-      </div>
-      <div class="card plugin-cli">
-        <div class="k">Taux de Réduction Facture</div>
-        <div class="v cli" id="kpi-reduction-pct">0%</div>
-        <div class="hint">Soit <strong id="kpi-roi-mult">0x</strong> le montant réellement dépensé</div>
-      </div>
-      <div class="card plugin-tok">
-        <div class="k">Cache Protégé par le Plugin</div>
-        <div class="v tokens" id="kpi-plugin-cache-pct">0%</div>
-        <div class="hint">Sur les sessions sous plugin (préservé de la saturation CLI)</div>
-      </div>
-      <div class="card plugin-spent">
-        <div class="k">Coût Réel Dépensé (Plugin)</div>
-        <div class="v spent" id="kpi-plugin-cost-eur">0,00 €</div>
-        <div class="hint">Facture réelle sur les sessions protégées</div>
-      </div>
-      <div class="card google-cache">
-        <div class="k">Cache Natif Google Passif</div>
-        <div class="v cache" id="kpi-google-cache-eur">0,00 €</div>
-        <div class="hint">Mécanisme automatique Gemini de base</div>
-      </div>
+  </div>
+
+  <!-- TAB 2 : TECHNICAL & METHODOLOGY -->
+  <div id="pane-tech" class="tab-pane">
+    <div class="section-head">
+      <h2 id="tech-mod-title">Répartition Technique par Modèle</h2>
+      <span id="tech-mod-sub">Visibilité brute sur l'ensemble des sessions analysées</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Modèle</th>
+            <th id="th-m-tier">Palier</th>
+            <th>Tours</th>
+            <th>Input</th>
+            <th>Cache Hit</th>
+            <th>Output</th>
+            <th id="th-m-cost">Équiv. API ($)</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-models"></tbody>
+      </table>
     </div>
 
-    <h2>📁 Bilan Exclusif par Projet</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Projet</th>
-          <th>Sessions sous Plugin</th>
-          <th>Gains Token Optimizer (€)</th>
-          <th>Tokens CLI Tronqués</th>
-          <th>Coût Réel (€)</th>
-          <th>Cache Natif Google (Passif)</th>
-        </tr>
-      </thead>
-      <tbody id="project-rows"></tbody>
-    </table>
+    <div class="section-head">
+      <h2 id="tech-verb-title">Sorties Outils les Plus Volumineuses Détectées</h2>
+      <span id="tech-verb-sub">Cibles prioritaires de troncature sandbox et read_file borné</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Session</th>
+            <th>Projet</th>
+            <th>Étape</th>
+            <th>Caractères</th>
+            <th>Tokens est.</th>
+            <th>Aperçu</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-verbose"></tbody>
+      </table>
+    </div>
 
-    <h2>⏱️ Historique Détaillé des Sessions</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Projet</th>
-          <th>Session</th>
-          <th>Statut</th>
-          <th>Date (France)</th>
-          <th>Tours</th>
-          <th>Cache Hit</th>
-          <th>Réduction Quota</th>
-          <th>Gain Estimé (€)</th>
-          <th>CLI Tronquée</th>
-          <th>Coût Équiv. (€)</th>
-        </tr>
-      </thead>
-      <tbody id="session-roi-rows"></tbody>
-    </table>
+    <div class="method-box" id="method-box"></div>
   </div>
 
-  <!-- ONGLET 2 : MÉTRIQUES TECHNIQUES -->
-  <div id="tab-tech" class="tab-content">
-    <h2>🤖 Répartition de l'Utilisation par Modèle</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Modèle</th>
-          <th>Tours</th>
-          <th>Input</th>
-          <th>Cache Hit</th>
-          <th>Output</th>
-          <th>Coût (€)</th>
-        </tr>
-      </thead>
-      <tbody id="model-rows"></tbody>
-    </table>
-
-    <h2>⚠️ Commandes CLI les Plus Volumineuses Interceptées</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Session</th>
-          <th>Projet</th>
-          <th>Étape</th>
-          <th>Caractères</th>
-          <th>Tokens Épargnés</th>
-          <th>Aperçu</th>
-        </tr>
-      </thead>
-      <tbody id="verbose-rows"></tbody>
-    </table>
-
-    <h2>📋 Sessions Complètes & Projections</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Session</th>
-          <th>Projet</th>
-          <th>Date (France)</th>
-          <th>Input Total</th>
-          <th>Cache Hit</th>
-          <th>Output</th>
-          <th>Coût Réel (€)</th>
-          <th>Projection +20 tours</th>
-        </tr>
-      </thead>
-      <tbody id="session-tech-rows"></tbody>
-    </table>
-  </div>
+</div>
 
 <script>
-  const RAW_DATA = /*__DATA_JSON__*/;
+  var RAW_DATA = /*__DATA_JSON__*/;
+  var GEN_DATE = "__GEN_DATE__";
 
-  let currentPeriod = 'all';
-  let currentProject = 'all';
+  var state = {
+    tab: 'overview',
+    period: 'all',
+    project: 'all',
+    unit: 'tokens',
+    lang: 'fr',
+    tier: localStorage.getItem('to_tier') || 'auto',
+    mode: localStorage.getItem('to_mode') || 'auto'
+  };
 
-  function switchTab(tabId, btn) {
-    document.querySelectorAll('.tab-content').forEach(function(el) { el.classList.remove('active'); });
-    document.querySelectorAll('.tab-btn').forEach(function(el) { el.classList.remove('active'); });
-    var target = document.getElementById(tabId);
-    if (target) target.classList.add('active');
+  var I18N = {
+    fr: {
+      subtitle: function(d) { return 'Installé le ' + d.pluginInstalledAt + ' · ' + d.timezone + ' · Généré le ' + GEN_DATE; },
+      tabOverview: "Vue d'ensemble",
+      tabTech: "Technique & Méthodo",
+      planLabel: "Abonnement & Mode",
+      liveQuotaLabel: "Quotas Live Gemini (agy CLI)",
+      fiveH: "Fenêtre 5 heures",
+      weekly: "Cycle Hebdomadaire",
+      quotaRuleLabel: "Mécanique des Quotas",
+      quotaNoteActive: "La fenêtre 5h lisse la charge récente ; le plafond hebdo suit votre forfait. Google effectue parfois des réinitialisations globales serveur en cours de semaine (retour à 100 % et nouveau cycle 7j).",
+      quotaNoteNoCli: "CLI `agy` non détectée localement : suivi calculé exclusivement sur vos transcripts locaux Antigravity.",
+      withinPlan: "Sous forfait — suivi en % & tokens",
+      overusagePlan: "Overusage actif — impact AI Credits",
+      periodTitle: "Période",
+      all: "Tout", days7: "7 jours", h24: "24h", h5: "5h", allProj: "Tous",
+      heroKicker: "EMPREINTE MÉCANIQUE VÉRIFIÉE · À MODÈLE ÉGAL · HORS CACHE GOOGLE",
+      m1Title: "Garde-fou & CLI",
+      m2Title: "Bouclier Contexte & Règles",
+      m3Title: "Délestage Schémas MCP",
+      m4Title: "Alertes & Boucles 0-Tok",
+      c1Title: "Consommation vs Estimation Sans Plugin par Session",
+      c1Sub: "Chaque barre compare le volume mesuré sous plugin à son estimation sans les mécanismes Token Optimizer.",
+      c2Title: "Comparatif Moyen / Tour (Avant vs Avec)",
+      c2Sub: "Mesure brute par tour à modèle égal sur l'historique analysé.",
+      advTitle: "Aide au Choix de Modèle (Conseil uniquement)",
+      advTag: "0 tok compté",
+      advDesc: "Règle indicative d'aiguillage (Flash / Hydrogen / Orchestrator). Non incluse dans les économies de tokens car vous restez maître du modèle choisi.",
+      gcacheTitle: "Cache Natif Google (Infrastructure Gemini)",
+      gcacheTag: "Hors plugin",
+      gcacheDesc: "Géré côté serveurs Google (non compté dans nos économies). Un changement de modèle ou un court sous-agent repart à 0 % au tour 1 ; le plugin empêche surtout les lectures brutes de casser ce préfixe.",
+      gcachePost: "Avec plugin", gcachePre: "Avant plugin", gcacheDelta: "Écart",
+      projTitle: "Bilan par Projet",
+      projSub: "Recalculé selon la fenêtre temporelle sélectionnée",
+      sessTitle: "Historique des Sessions",
+      sessSub: "Attribution exacte tour par tour selon la date d'installation",
+      stActive: "Actif", stMixed: "Pré+Post install", stBefore: "Pré-plugin",
+      noData: "Aucune session pour ces filtres.",
+      withoutLbl: "Estimé sans plugin",
+      usedLbl: "Consommé sous plugin",
+      savedMcpLbl: "Économie MCP",
+      savedCtxCliLbl: "Contexte / CLI évités",
+      beforeLbl: "Avant plugin",
+      afterLbl: "Avec plugin",
+      lightTier: "Léger (Flash)", midTier: "Équilibré (Hydrogen)", heavyTier: "Lourd (Neon / Claude)"
+    },
+    en: {
+      subtitle: function(d) { return 'Installed ' + d.pluginInstalledAt + ' · ' + d.timezone + ' · Generated ' + GEN_DATE; },
+      tabOverview: "Overview",
+      tabTech: "Technical & Method",
+      planLabel: "Plan & Accounting Mode",
+      liveQuotaLabel: "Live Gemini Quotas (agy CLI)",
+      fiveH: "5-Hour Rolling Window",
+      weekly: "Weekly Cycle",
+      quotaRuleLabel: "How Quotas Reset",
+      quotaNoteActive: "The 5h rolling window smooths bursts while the weekly pool tracks your tier. Google occasionally issues global server-side quota refills mid-week, resetting meters back to 100% and anchoring a fresh 7-day timer.",
+      quotaNoteNoCli: "`agy` CLI unavailable locally: metrics are computed strictly from local Antigravity transcripts.",
+      withinPlan: "Within plan — % & token tracking",
+      overusagePlan: "Overusage active — AI Credits impact",
+      periodTitle: "Window",
+      all: "All", days7: "7 days", h24: "24h", h5: "5h", allProj: "All",
+      heroKicker: "VERIFIED MECHANICAL FOOTPRINT · MODEL-AGNOSTIC · EXCL. GOOGLE CACHE",
+      m1Title: "CLI Guard & Compression",
+      m2Title: "Context & Ignore Shield",
+      m3Title: "MCP Schema Trimming",
+      m4Title: "Zero-Token Watch & Loops",
+      c1Title: "Consumed vs Estimated Without Plugin by Session",
+      c1Sub: "Each column compares real post-plugin volume against its estimated unoptimized footprint.",
+      c2Title: "Per-Turn Footprint (Before vs With Plugin)",
+      c2Sub: "Model-agnostic per-turn comparison across analyzed transcripts.",
+      advTitle: "Model Choice Advisor (Guidance Only)",
+      advTag: "0 tok counted",
+      advDesc: "Advisory routing indicator (Flash / Hydrogen / Orchestrator). Excluded from token savings since model choice always remains yours.",
+      gcacheTitle: "Google Native Prefix Cache",
+      gcacheTag: "Excluded from plugin",
+      gcacheDesc: "Managed by Google servers (excluded from plugin savings). Switching models or spawning short subagents starts at 0% on turn 1; the plugin mainly prevents raw dumps from breaking prefixes.",
+      gcachePost: "With plugin", gcachePre: "Before plugin", gcacheDelta: "Delta",
+      projTitle: "Breakdown by Project",
+      projSub: "Dynamically recomputed for the active time filter",
+      sessTitle: "Session History",
+      sessSub: "Accurate turn-by-turn split from actual install timestamp",
+      stActive: "Active", stMixed: "Pre+Post install", stBefore: "Pre-plugin",
+      noData: "No sessions match the selected filters.",
+      withoutLbl: "Estimated without plugin",
+      usedLbl: "Consumed with plugin",
+      savedMcpLbl: "MCP schema saved",
+      savedCtxCliLbl: "Context / CLI saved",
+      beforeLbl: "Before plugin",
+      afterLbl: "With plugin",
+      lightTier: "Light (Flash)", midTier: "Balanced (Hydrogen)", heavyTier: "Heavy (Neon / Claude)"
+    }
+  };
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function asArr(v) {
+    if (Array.isArray(v)) return v;
+    return v ? [v] : [];
+  }
+
+  function loc() { return state.lang === 'en' ? 'en-US' : 'fr-FR'; }
+
+  function fmtTok(n) {
+    var v = Number(n || 0);
+    var sign = v < 0 ? '-' : '';
+    var a = Math.abs(v);
+    if (a >= 1e9) return sign + (a / 1e9).toFixed(2).replace('.', state.lang === 'fr' ? ',' : '.') + ' B';
+    if (a >= 1e6) return sign + (a / 1e6).toFixed(1).replace('.', state.lang === 'fr' ? ',' : '.') + ' M';
+    if (a >= 1e4) return sign + (a / 1e3).toFixed(1).replace('.', state.lang === 'fr' ? ',' : '.') + ' k';
+    return Math.round(v).toLocaleString(loc());
+  }
+
+  function fmtNum(n, dec) {
+    var d = dec == null ? 1 : dec;
+    var s = Number(n || 0).toFixed(d);
+    return state.lang === 'fr' ? s.replace('.', ',') : s;
+  }
+
+  function fmtVal(tokens, usdEquiv) {
+    if (state.unit === 'eur') {
+      var eur = Number(usdEquiv || 0) * (RAW_DATA.usdToEur || 0.92);
+      return fmtNum(eur, 2) + ' €';
+    }
+    if (state.unit === 'usd') {
+      return '$' + fmtNum(Number(usdEquiv || 0), 2);
+    }
+    return fmtTok(tokens) + ' tok';
+  }
+
+  function isWithinPeriod(iso, p) {
+    if (p === 'all' || !iso) return true;
+    var diffH = (Date.now() - new Date(iso).getTime()) / 3600000;
+    if (p === '5h') return diffH <= 5;
+    if (p === '24h') return diffH <= 24;
+    if (p === '7d') return diffH <= 168;
+    return true;
+  }
+
+  function switchTab(id, btn) {
+    state.tab = id;
+    document.querySelectorAll('.tab-pane').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.controls .seg:first-child .seg-btn').forEach(function(b) { b.classList.remove('active'); });
+    var pane = document.getElementById('pane-' + id);
+    if (pane) pane.classList.add('active');
     if (btn) btn.classList.add('active');
   }
 
-  function setPeriodFilter(p, btn) {
-    currentPeriod = p;
-    if (btn && btn.parentElement) {
-      btn.parentElement.querySelectorAll('.btn-pill').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-    }
+  function setPeriod(p, btn) {
+    state.period = p;
+    document.querySelectorAll('#period-filters .f-pill').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
     render();
   }
 
-  function setProjectFilter(proj, btn) {
-    currentProject = proj;
-    if (btn && btn.parentElement) {
-      btn.parentElement.querySelectorAll('.btn-pill').forEach(function(b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-    }
+  function setProject(proj, btn) {
+    state.project = proj;
+    document.querySelectorAll('#project-filters .f-pill').forEach(function(b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
     render();
   }
 
-  function isWithinPeriod(dateIso, period) {
-    if (period === 'all') return true;
-    var d = new Date(dateIso);
-    var now = new Date();
-    var diffHours = (now - d) / (1000 * 60 * 60);
-    if (period === '24h') return diffHours <= 24;
-    if (period === '7d') return diffHours <= (24 * 7);
-    if (period === 'today') {
-      return d.toDateString() === now.toDateString();
+  function setUnit(u, btn) {
+    state.unit = u;
+    ['unit-tokens', 'unit-eur', 'unit-usd'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.classList.toggle('active', id === 'unit-' + u);
+    });
+    render();
+  }
+
+  function setLang(l, btn) {
+    state.lang = l;
+    document.getElementById('lang-fr').classList.toggle('active', l === 'fr');
+    document.getElementById('lang-en').classList.toggle('active', l === 'en');
+    var modeSel = document.getElementById('mode-select');
+    if (modeSel && modeSel.options.length === 3) {
+      modeSel.options[0].text = l === 'en' ? 'Mode: Auto' : 'Calcul : Auto';
+      modeSel.options[1].text = l === 'en' ? 'Mode: Within Plan (%)' : 'Calcul : Sous forfait (%)';
+      modeSel.options[2].text = l === 'en' ? 'Mode: Overusage (Credits)' : 'Calcul : Overusage (€ / Crédits)';
     }
-    return true;
+    applyStaticTexts();
+    buildProjectFilters();
+    renderQuotaStrip();
+    render();
+  }
+
+  function setTierOverride(v) {
+    state.tier = v;
+    localStorage.setItem('to_tier', v);
+    renderQuotaStrip();
+  }
+
+  function setModeOverride(v) {
+    state.mode = v;
+    localStorage.setItem('to_mode', v);
+    renderQuotaStrip();
+    render();
+  }
+
+  function isOverusageMode() {
+    if (state.mode === 'overusage') return true;
+    if (state.mode === 'within') return false;
+    return Boolean(RAW_DATA && RAW_DATA.antigravityLive && RAW_DATA.antigravityLive.overusageActive);
+  }
+
+  function computeSessionSavings(c, baseline) {
+    if (!c.postTurns || c.postTurns <= 0) {
+      return { used: 0, direct: 0, mcp: 0, ctxExtra: 0, totalSaved: 0, estWithout: 0, pct: 0 };
+    }
+    var used = Number(c.postRawTokens || 0);
+    var direct = Number(c.directSavedTokens || 0);
+    var mcp = Number(c.mcpSavedTokens || 0);
+    var ctxDrop = 0;
+    if (baseline && baseline.source === 'personal' && baseline.avgRawPerTurn > 0) {
+      var avgC = used / c.postTurns;
+      ctxDrop = Math.max(0, Math.round((baseline.avgRawPerTurn - avgC) * c.postTurns));
+    }
+    // Never double-count MCP schema savings already reflected inside lower context average
+    var ctxExtra = Math.max(0, ctxDrop - mcp);
+    var totalSaved = direct + mcp + ctxExtra;
+    var estWithout = used + totalSaved;
+    var pct = estWithout > 0 ? (totalSaved / estWithout) * 100 : 0;
+    return { used: used, direct: direct, mcp: mcp, ctxExtra: ctxExtra, totalSaved: totalSaved, estWithout: estWithout, pct: pct };
+  }
+
+  function renderQuotaStrip() {
+    var t = I18N[state.lang];
+    var q = RAW_DATA.antigravityLive || {};
+    document.getElementById('tier-select').value = state.tier;
+    document.getElementById('mode-select').value = state.mode;
+
+    var over = isOverusageMode();
+    var badge = document.getElementById('mode-status-badge');
+    badge.className = 'mode-badge ' + (over ? 'over' : 'within');
+    badge.innerText = over ? t.overusagePlan : t.withinPlan;
+
+    var creds = q.remainingCredits;
+    var credEl = document.getElementById('q-credits-pill');
+    if (credEl) {
+      credEl.innerText = (creds != null) ? ('AI Credits: ' + creds) : '';
+    }
+
+    var gem = q.gemini || {};
+    var p5 = gem.fiveHourPct;
+    var pWk = gem.weeklyPct;
+
+    var el5 = document.getElementById('q-5h-val');
+    var bar5 = document.getElementById('q-5h-bar');
+    if (p5 != null) {
+      el5.innerText = fmtNum(p5, 1) + '%';
+      bar5.style.width = Math.max(0, Math.min(100, p5)) + '%';
+      bar5.className = 'meter-fill' + (p5 < 20 ? ' crit' : (p5 < 45 ? ' warn' : ''));
+    } else {
+      el5.innerText = 'N/A';
+      bar5.style.width = '0%';
+    }
+
+    var elWk = document.getElementById('q-wk-val');
+    var barWk = document.getElementById('q-wk-bar');
+    if (pWk != null) {
+      elWk.innerText = fmtNum(pWk, 1) + '%';
+      barWk.style.width = Math.max(0, Math.min(100, pWk)) + '%';
+      barWk.className = 'meter-fill' + (pWk < 20 ? ' crit' : (pWk < 45 ? ' warn' : ''));
+    } else {
+      elWk.innerText = 'N/A';
+      barWk.style.width = '0%';
+    }
+
+    var resetHint = '';
+    if (gem.weeklyReset) {
+      var d = new Date(gem.weeklyReset);
+      if (!isNaN(d.getTime())) {
+        resetHint = 'Reset: ' + d.toLocaleDateString(loc(), { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' });
+      }
+    }
+    document.getElementById('q-reset-hint').innerText = resetHint;
+    document.getElementById('txt-quota-note').innerText = q.available ? t.quotaNoteActive : t.quotaNoteNoCli;
+  }
+
+  function applyStaticTexts() {
+    var t = I18N[state.lang];
+    document.getElementById('txt-subtitle').innerText = t.subtitle(RAW_DATA);
+    document.getElementById('tab-btn-overview').innerText = t.tabOverview;
+    document.getElementById('tab-btn-tech').innerText = t.tabTech;
+    document.getElementById('txt-plan-label').innerText = t.planLabel;
+    document.getElementById('txt-live-quota-label').innerText = t.liveQuotaLabel;
+    document.getElementById('txt-5h-label').innerText = t.fiveH;
+    document.getElementById('txt-weekly-label').innerText = t.weekly;
+    document.getElementById('txt-quota-rule-label').innerText = t.quotaRuleLabel;
+    document.getElementById('txt-period-title').innerText = t.periodTitle;
+    var pBtns = document.querySelectorAll('#period-filters .f-pill');
+    if (pBtns.length === 4) {
+      pBtns[0].innerText = t.all;
+      pBtns[1].innerText = t.days7;
+      pBtns[2].innerText = t.h24;
+      pBtns[3].innerText = t.h5;
+    }
+    document.getElementById('txt-hero-kicker').innerText = t.heroKicker;
+    document.getElementById('m1-title').innerText = t.m1Title;
+    document.getElementById('m2-title').innerText = t.m2Title;
+    document.getElementById('m3-title').innerText = t.m3Title;
+    document.getElementById('m4-title').innerText = t.m4Title;
+    document.getElementById('c1-title').innerText = t.c1Title;
+    document.getElementById('c1-sub').innerText = t.c1Sub;
+    document.getElementById('c2-title').innerText = t.c2Title;
+    document.getElementById('c2-sub').innerText = t.c2Sub;
+    document.getElementById('adv-title').innerText = t.advTitle;
+    document.getElementById('adv-tag').innerText = t.advTag;
+    document.getElementById('adv-desc').innerText = t.advDesc;
+    document.getElementById('gcache-title').innerText = t.gcacheTitle;
+    document.getElementById('gcache-tag').innerText = t.gcacheTag;
+    document.getElementById('gcache-desc').innerText = t.gcacheDesc;
+    document.getElementById('gcache-post-lbl').innerText = t.gcachePost;
+    document.getElementById('gcache-pre-lbl').innerText = t.gcachePre;
+    document.getElementById('gcache-delta-lbl').innerText = t.gcacheDelta;
+    document.getElementById('tbl-proj-title').innerText = t.projTitle;
+    document.getElementById('tbl-proj-sub').innerText = t.projSub;
+    document.getElementById('tbl-sess-title').innerText = t.sessTitle;
+    document.getElementById('tbl-sess-sub').innerText = t.sessSub;
+  }
+
+  function buildProjectFilters() {
+    var t = I18N[state.lang];
+    var grp = document.getElementById('project-filters');
+    if (!grp) return;
+    var projs = asArr(RAW_DATA.byProject);
+    var html = '<span class="fg-title">' + esc(state.lang === 'en' ? 'Project' : 'Projet') + '</span>' +
+      '<button class="f-pill ' + (state.project === 'all' ? 'active' : '') + '" onclick="setProject(\'all\', this)">' + esc(t.allProj) + '</button>';
+    projs.forEach(function(p) {
+      var act = (state.project === p.project) ? 'active' : '';
+      var jsArg = p.project.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      html += '<button class="f-pill ' + act + '" onclick="setProject(\'' + esc(jsArg) + '\', this)">' + esc(p.project) + '</button>';
+    });
+    grp.innerHTML = html;
+  }
+
+  function renderHeroSvg(used, mcpSaved, ctxCliSaved, estWithout) {
+    var t = I18N[state.lang];
+    var el = document.getElementById('hero-bar-svg');
+    var leg = document.getElementById('hero-vis-legend');
+    if (!estWithout || estWithout <= 0) {
+      el.innerHTML = '<div style="padding:18px 0; color:var(--ink-3); font-size:12.5px;">' + esc(t.noData) + '</div>';
+      leg.innerHTML = '';
+      return;
+    }
+
+    var w = 440, h = 112;
+    var barMax = 416;
+    var usedW = Math.max(4, Math.round((used / estWithout) * barMax));
+    var mcpW = Math.round((mcpSaved / estWithout) * barMax);
+    var ctxW = Math.max(0, barMax - usedW - mcpW);
+
+    el.innerHTML =
+      '<svg viewBox="0 0 ' + w + ' ' + h + '" width="100%" height="' + h + '">' +
+        '<text x="0" y="14" fill="#9ca3af" font-size="11.5" font-weight="500">' + esc(t.withoutLbl) + ' (100%)</text>' +
+        '<text x="' + w + '" y="14" text-anchor="end" fill="#edeef0" font-size="11.5" font-weight="600">' + esc(fmtTok(estWithout)) + '</text>' +
+        '<rect x="0" y="22" width="' + barMax + '" height="18" rx="4" fill="#282d3a" />' +
+        '<text x="0" y="64" fill="#9ca3af" font-size="11.5" font-weight="500">' + esc(t.usedLbl) + '</text>' +
+        '<text x="' + w + '" y="64" text-anchor="end" fill="#edeef0" font-size="11.5" font-weight="600">' + esc(fmtTok(used)) + '</text>' +
+        '<rect x="0" y="72" width="' + usedW + '" height="22" rx="4" fill="#c9945b" />' +
+        (ctxW > 0 ? '<rect x="' + (usedW + 1) + '" y="72" width="' + Math.max(1, ctxW - 1) + '" height="22" rx="2" fill="#4fa87e" fill-opacity="0.72" />' : '') +
+        (mcpW > 0 ? '<rect x="' + (usedW + ctxW + 1) + '" y="72" width="' + Math.max(1, mcpW - 1) + '" height="22" rx="4" fill="#4fa87e" />' : '') +
+      '</svg>';
+
+    leg.innerHTML =
+      '<span><span class="dot" style="background:#c9945b"></span>' + esc(t.usedLbl) + ': <strong>' + esc(fmtTok(used)) + '</strong></span>' +
+      '<span><span class="dot" style="background:rgba(79,168,126,0.72)"></span>' + esc(t.savedCtxCliLbl) + ': <strong>' + esc(fmtTok(ctxCliSaved)) + '</strong></span>' +
+      '<span><span class="dot" style="background:#4fa87e"></span>' + esc(t.savedMcpLbl) + ': <strong>' + esc(fmtTok(mcpSaved)) + '</strong></span>';
+  }
+
+  function renderSessionBars(postConvs, baseline) {
+    var t = I18N[state.lang];
+    var wrap = document.getElementById('chart-sessions');
+    var tip = document.getElementById('chart-tooltip');
+    var list = postConvs.slice(0, 12).reverse();
+    if (list.length === 0) {
+      wrap.innerHTML = '<div style="padding:40px 0; text-align:center; color:var(--ink-3);">' + esc(t.noData) + '</div>';
+      return;
+    }
+
+    var W = 620, H = 220, padL = 44, padR = 14, padT = 16, padB = 34;
+    var plotW = W - padL - padR, plotH = H - padT - padB;
+    var rows = list.map(function(c) {
+      var s = computeSessionSavings(c, baseline);
+      return { c: c, s: s };
+    });
+    var maxV = Math.max(1, Math.max.apply(null, rows.map(function(r) { return r.s.estWithout; })));
+    var colW = plotW / rows.length;
+    var barW = Math.min(36, Math.max(12, colW * 0.62));
+
+    var svg = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="' + H + '">';
+    for (var g = 0; g <= 3; g++) {
+      var gy = padT + (plotH * (g / 3));
+      var gVal = maxV * (1 - g / 3);
+      svg += '<line x1="' + padL + '" y1="' + gy + '" x2="' + (W - padR) + '" y2="' + gy + '" stroke="#222631" stroke-dasharray="3 3" />';
+      svg += '<text x="' + (padL - 6) + '" y="' + (gy + 4) + '" text-anchor="end" fill="#68707d" font-size="10.5">' + esc(fmtTok(gVal)) + '</text>';
+    }
+
+    rows.forEach(function(r, idx) {
+      var cx = padL + idx * colW + (colW - barW) / 2;
+      var totalH = (r.s.estWithout / maxV) * plotH;
+      var usedH = (r.s.used / maxV) * plotH;
+      var savedH = Math.max(0, totalH - usedH);
+      var yTop = padT + plotH - totalH;
+      var yUsed = padT + plotH - usedH;
+      var sid = r.c.conversationId.substring(0, 6);
+
+      svg += '<g class="s-bar-grp" data-idx="' + idx + '" style="cursor:pointer">' +
+        '<rect x="' + (cx - 4) + '" y="' + padT + '" width="' + (barW + 8) + '" height="' + plotH + '" fill="transparent" />' +
+        '<rect x="' + cx + '" y="' + yUsed + '" width="' + barW + '" height="' + Math.max(2, usedH) + '" rx="2" fill="#c9945b" />' +
+        (savedH > 0 ? '<rect x="' + cx + '" y="' + yTop + '" width="' + barW + '" height="' + savedH + '" rx="2" fill="#4fa87e" fill-opacity="0.78" />' : '') +
+        '<text x="' + (cx + barW / 2) + '" y="' + (H - 10) + '" text-anchor="middle" fill="#68707d" font-size="10.5">' + esc(sid) + '</text>' +
+      '</g>';
+    });
+    svg += '</svg>';
+    wrap.innerHTML = svg;
+
+    wrap.querySelectorAll('.s-bar-grp').forEach(function(gEl) {
+      gEl.addEventListener('mousemove', function(ev) {
+        var r = rows[parseInt(gEl.getAttribute('data-idx'), 10)];
+        if (!r) return;
+        var rect = wrap.parentElement.getBoundingClientRect();
+        tip.style.display = 'block';
+        tip.style.left = Math.min(rect.width - 195, Math.max(8, ev.clientX - rect.left + 12)) + 'px';
+        tip.style.top = Math.max(8, ev.clientY - rect.top - 14) + 'px';
+        tip.innerHTML =
+          '<div style="font-weight:600; margin-bottom:4px;">' + esc(r.c.project) + ' · <span class="mono">' + esc(r.c.conversationId.substring(0, 8)) + '</span></div>' +
+          '<div style="color:#9ca3af;">' + esc(t.usedLbl) + ': <strong style="color:#c9945b;">' + esc(fmtTok(r.s.used)) + '</strong></div>' +
+          '<div style="color:#9ca3af;">' + esc(t.withoutLbl) + ': <strong>' + esc(fmtTok(r.s.estWithout)) + '</strong></div>' +
+          '<div style="color:#4fa87e;">-' + fmtNum(r.s.pct, 1) + '% (' + esc(fmtTok(r.s.totalSaved)) + ')</div>';
+      });
+      gEl.addEventListener('mouseleave', function() { tip.style.display = 'none'; });
+    });
+  }
+
+  function renderComparisonPanel(avgPostCtx, avgPostUnc, avgPostOut, baseline) {
+    var t = I18N[state.lang];
+    var el = document.getElementById('chart-comp');
+    var hasPre = baseline && baseline.preTurns > 0;
+    document.getElementById('c2-badge').innerText = hasPre ? (baseline.preTurns + ' ' + (state.lang === 'en' ? 'pre turns' : 'tours avant')) : 'Standard';
+
+    function rowHtml(label, preV, postV) {
+      var deltaHtml = '<span style="color:var(--ink-3)">-</span>';
+      if (hasPre && preV > 0) {
+        var dPct = ((postV - preV) / preV) * 100;
+        var col = dPct <= 0 ? 'var(--sage)' : 'var(--ochre)';
+        deltaHtml = '<span class="num" style="color:' + col + '; font-weight:600;">' + (dPct > 0 ? '+' : '') + fmtNum(dPct, 1) + '%</span>';
+      }
+      return '<div class="comp-row">' +
+        '<span style="color:var(--ink-2)">' + esc(label) + '</span>' +
+        '<span class="num" style="color:var(--ink-3)">' + (hasPre ? esc(fmtTok(preV)) : '-') + '</span>' +
+        '<span class="num" style="font-weight:600; color:var(--ink)">' + esc(fmtTok(postV)) + '</span>' +
+        deltaHtml +
+      '</div>';
+    }
+
+    el.innerHTML =
+      '<div class="comp-row" style="border-top:none; padding-top:0; font-size:11px; text-transform:uppercase; color:var(--ink-3);">' +
+        '<span></span><span>' + esc(t.beforeLbl) + '</span><span>' + esc(t.afterLbl) + '</span><span>Delta</span>' +
+      '</div>' +
+      rowHtml(state.lang === 'en' ? 'Context / turn' : 'Contexte / tour', baseline.avgContextPerTurn || 0, avgPostCtx) +
+      rowHtml(state.lang === 'en' ? 'Uncached / turn' : 'Input neuf / tour', baseline.avgUncachedPerTurn || 0, avgPostUnc) +
+      rowHtml(state.lang === 'en' ? 'Output / turn' : 'Sortie / tour', baseline.avgOutputPerTurn || 0, avgPostOut);
+  }
+
+  function renderAdvisorMix(preMix, postMix, badgeCount) {
+    var t = I18N[state.lang];
+    var el = document.getElementById('advisor-mix-svg');
+    function ribbon(lbl, y, m) {
+      var w = 440;
+      var lW = Math.round(((m.light || 0) / 100) * w);
+      var mW = Math.round(((m.mid || 0) / 100) * w);
+      var hW = Math.max(0, w - lW - mW);
+      return '<text x="0" y="' + y + '" fill="#9ca3af" font-size="11">' + esc(lbl) + ' (' + fmtNum(m.light,0) + '% / ' + fmtNum(m.mid,0) + '% / ' + fmtNum(m.heavy,0) + '%)</text>' +
+        '<rect x="0" y="' + (y + 6) + '" width="' + lW + '" height="10" rx="2" fill="#4fa87e" fill-opacity="0.7" />' +
+        '<rect x="' + lW + '" y="' + (y + 6) + '" width="' + mW + '" height="10" fill="#74859e" />' +
+        '<rect x="' + (lW + mW) + '" y="' + (y + 6) + '" width="' + hW + '" height="10" rx="2" fill="#c9945b" />';
+    }
+    el.innerHTML =
+      '<svg viewBox="0 0 440 76" width="100%" height="76">' +
+        ribbon(t.beforeLbl, 12, preMix || {}) +
+        ribbon(t.afterLbl, 46, postMix || {}) +
+      '</svg>' +
+      '<div style="display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--ink-3); margin-top:4px;">' +
+        '<span><span class="dot" style="background:rgba(79,168,126,0.7)"></span>' + esc(t.lightTier) + '</span>' +
+        '<span><span class="dot" style="background:#74859e"></span>' + esc(t.midTier) + '</span>' +
+        '<span><span class="dot" style="background:#c9945b"></span>' + esc(t.heavyTier) + '</span>' +
+        '<span class="num" style="margin-left:auto;">[Audit]: <strong>' + (badgeCount || 0) + '</strong></span>' +
+      '</div>';
   }
 
   function render() {
     if (!RAW_DATA || !RAW_DATA.conversations) return;
+    var t = I18N[state.lang];
+    var baseline = RAW_DATA.baseline || {};
+    var mech = RAW_DATA.mechanisms || {};
+    var convs = asArr(RAW_DATA.conversations);
 
-    var filteredConv = RAW_DATA.conversations.filter(function(c) {
-      var matchProj = (currentProject === 'all') || (c.project === currentProject);
-      var matchPeriod = isWithinPeriod(c.lastUpdatedIso, currentPeriod);
-      return matchProj && matchPeriod;
+    var filtered = convs.filter(function(c) {
+      var okProj = (state.project === 'all') || (c.project === state.project);
+      var okPer = isWithinPeriod(c.lastUpdatedIso, state.period);
+      return okProj && okPer;
     });
 
-    var pluginSavedEur = 0;
-    var pluginCliTokens = 0;
-    var pluginCostEur = 0;
-    var pluginInputTokens = 0;
-    var pluginCacheTokens = 0;
-    var googleNativeCacheEur = 0;
+    var postConvs = filtered.filter(function(c) { return c.postTurns > 0; });
 
-    filteredConv.forEach(function(c) {
-      if (c.isPluginActive) {
-        pluginSavedEur += (c.pluginArbitrageEur || 0);
-        pluginCliTokens += (c.pluginCliSavedTokens || 0);
-        pluginCostEur += (c.costEur || 0);
-        pluginInputTokens += (c.inputTokens || 0);
-        pluginCacheTokens += (c.cacheReadTokens || 0);
+    var postTurns = 0, usedRaw = 0, usedUncached = 0, usedCached = 0, usedOut = 0, usedUsd = 0;
+    var directSaved = 0, mcpSaved = 0, ctxExtraSaved = 0;
+    var lT = 0, mT = 0, hT = 0;
+    var fDenials = 0, fComp = 0, fLines = 0, fWatch = 0, fBadges = 0;
+
+    postConvs.forEach(function(c) {
+      var s = computeSessionSavings(c, baseline);
+      postTurns += (c.postTurns || 0);
+      usedRaw += s.used;
+      usedUncached += (c.postUncachedTokens || 0);
+      usedCached += (c.postCacheReadTokens || 0);
+      usedOut += (c.postOutputTokens || 0);
+      usedUsd += (c.postCostUsd || 0);
+      directSaved += s.direct;
+      mcpSaved += s.mcp;
+      ctxExtraSaved += s.ctxExtra;
+
+      lT += (c.postLightTurns || 0);
+      mT += (c.postMidTurns || 0);
+      hT += (c.postHeavyTurns || 0);
+
+      var hk = c.hooks || {};
+      fDenials += (hk.cliDenials || 0);
+      fComp += (hk.cliCompressions || 0);
+      fLines += (hk.cliLinesSaved || 0);
+      fWatch += (hk.zeroTokWatches || 0);
+      fBadges += (hk.modelAuditBadges || 0);
+    });
+
+    // Include global telemetry counts when viewing full scope
+    if (state.period === 'all' && state.project === 'all') {
+      fDenials = Math.max(fDenials, mech.cliDenials || 0);
+      fComp = Math.max(fComp, mech.cliCompressions || 0);
+      fWatch = Math.max(fWatch, mech.zeroTokTotal || 0);
+    }
+
+    var totalSaved = directSaved + mcpSaved + ctxExtraSaved;
+    var estWithout = usedRaw + totalSaved;
+    var pctSaved = estWithout > 0 ? (totalSaved / estWithout) * 100 : 0;
+
+    document.getElementById('scope-summary').innerText = postTurns.toLocaleString(loc()) +
+      (state.lang === 'en' ? ' plugin turns · ' : ' tours sous plugin · ') +
+      filtered.length + (state.lang === 'en' ? ' sessions' : ' sessions');
+
+    // Hero update
+    var heroPctEl = document.getElementById('hero-pct');
+    heroPctEl.innerText = '-' + fmtNum(pctSaved, 1) + ' %';
+    heroPctEl.className = 'hero-num num' + (pctSaved <= 0 ? ' neutral' : '');
+
+    var over = isOverusageMode();
+    var savedUsdEquiv = (estWithout > 0 && usedUsd > 0 && pctSaved > 0) ? (usedUsd / (1 - pctSaved / 100) - usedUsd) : 0;
+    var estUsdEquiv = usedUsd + savedUsdEquiv;
+
+    document.getElementById('hero-saved-sub').innerText = (over || state.unit !== 'tokens')
+      ? ('-' + fmtTok(totalSaved) + ' tok · ' + fmtVal(totalSaved, savedUsdEquiv))
+      : ('-' + fmtTok(totalSaved) + ' tokens');
+
+    var sentEl = document.getElementById('hero-sentence');
+    if (postTurns === 0) {
+      sentEl.innerText = t.noData;
+      document.getElementById('hero-scale').innerText = '-';
+    } else if (over && state.unit === 'tokens') {
+      var ovCostStr = fmtNum(savedUsdEquiv * (RAW_DATA.usdToEur || 0.92), 2) + ' € / $' + fmtNum(savedUsdEquiv, 2);
+      sentEl.innerHTML = (state.lang === 'en'
+        ? 'With Token Optimizer you processed <strong>' + esc(fmtTok(usedRaw)) + ' tokens</strong> instead of an estimated <strong>' + esc(fmtTok(estWithout)) + '</strong> (estimated AI Credits overage avoided: ~<strong>' + esc(ovCostStr) + '</strong>).'
+        : 'Vous avez consommé <strong>' + esc(fmtTok(usedRaw)) + ' tokens</strong> au lieu d\'environ <strong>' + esc(fmtTok(estWithout)) + '</strong> sans Token Optimizer (surcoût AI Credits évité : ~<strong>' + esc(ovCostStr) + '</strong>).');
+    } else {
+      sentEl.innerHTML = (state.lang === 'en'
+        ? 'On these sessions you used <strong>' + esc(fmtVal(usedRaw, usedUsd)) + '</strong> instead of an estimated <strong>' + esc(fmtVal(estWithout, estUsdEquiv)) + '</strong> without Token Optimizer — sparing <strong>' + esc(fmtVal(totalSaved, savedUsdEquiv)) + '</strong> of quota headroom.'
+        : 'Sur ces sessions, vous avez utilisé <strong>' + esc(fmtVal(usedRaw, usedUsd)) + '</strong> à la place d\'environ <strong>' + esc(fmtVal(estWithout, estUsdEquiv)) + '</strong> sans Token Optimizer — soit <strong>' + esc(fmtVal(totalSaved, savedUsdEquiv)) + '</strong> préservés sur votre quota.');
+    }
+
+    if (usedRaw > 0) {
+      var eq10kWithout = Math.round(10000 * (estWithout / usedRaw));
+      document.getElementById('hero-scale').innerHTML = (state.lang === 'en'
+        ? 'Normalized scale: <strong>10,000</strong> tokens used instead of <strong>' + eq10kWithout.toLocaleString(loc()) + '</strong> tokens'
+        : 'Échelle normalisée : <strong>10 000</strong> tokens dépensés au lieu de <strong>' + eq10kWithout.toLocaleString(loc()) + '</strong> tokens');
+    }
+
+    renderHeroSvg(usedRaw, mcpSaved, directSaved + ctxExtraSaved, estWithout);
+
+    // 4 Mechanism Cards
+    document.getElementById('m1-val').innerText = fmtTok(directSaved);
+    document.getElementById('m1-foot').innerHTML = '<strong>' + fDenials + '</strong> ' + (state.lang === 'en' ? 'raw dumps blocked' : 'dumps bloqués') +
+      ' · <strong>' + fComp + '</strong> ' + (state.lang === 'en' ? 'CLI compressed' : 'CLI compressées') +
+      (fLines > 0 ? (' (' + fLines + ' l.)') : '');
+
+    var avgPostCtx = postTurns > 0 ? Math.round((usedUncached + usedCached) / postTurns) : 0;
+    var avgPostUnc = postTurns > 0 ? Math.round(usedUncached / postTurns) : 0;
+    var avgPostOut = postTurns > 0 ? Math.round(usedOut / postTurns) : 0;
+    var ctxPctDiff = (baseline.avgContextPerTurn > 0 && avgPostCtx > 0)
+      ? (((avgPostCtx - baseline.avgContextPerTurn) / baseline.avgContextPerTurn) * 100)
+      : 0;
+    document.getElementById('m2-val').innerText = (ctxPctDiff > 0 ? '+' : '') + fmtNum(ctxPctDiff, 1) + ' %';
+    document.getElementById('m2-val').className = 'card-val num ' + (ctxPctDiff <= 0 ? 'sage' : 'ochre');
+    document.getElementById('m2-foot').innerHTML = (state.lang === 'en' ? 'Avg context: ' : 'Contexte moy. : ') +
+      '<strong>' + esc(fmtTok(avgPostCtx)) + '</strong>' +
+      (baseline.avgContextPerTurn > 0 ? (' vs ' + esc(fmtTok(baseline.avgContextPerTurn))) : '') +
+      (mech.outlinesCount ? (' · ' + mech.outlinesCount + ' outlines') : '');
+
+    document.getElementById('m3-val').innerText = fmtTok(mcpSaved);
+    var disNames = asArr(mech.mcpDisabled).join(', ');
+    document.getElementById('m3-foot').innerHTML = '<strong>' + (mech.mcpDisabledCount || 0) + '</strong> ' +
+      (state.lang === 'en' ? 'heavy MCP trimmed' : 'MCP lourds coupés') +
+      (disNames ? (' (' + esc(disNames) + ')') : '');
+
+    document.getElementById('m4-val').innerText = String(fWatch);
+    document.getElementById('m4-foot').innerHTML = (state.lang === 'en' ? 'Audits, loops & milestone alerts at ' : 'Audits, boucles et jalons à ') +
+      '<strong>0 token</strong>';
+
+    // Charts
+    document.getElementById('c1-unit').innerText = state.unit.toUpperCase();
+    renderSessionBars(postConvs, baseline);
+    renderComparisonPanel(avgPostCtx, avgPostUnc, avgPostOut, baseline);
+
+    // Model Advisor (Excluded from Savings)
+    var mixSum = Math.max(1, lT + mT + hT);
+    var postMixFiltered = {
+      light: (lT / mixSum) * 100,
+      mid: (mT / mixSum) * 100,
+      heavy: (hT / mixSum) * 100
+    };
+    renderAdvisorMix(baseline.modelMixPct, postTurns > 0 ? postMixFiltered : RAW_DATA.postSummary.modelMixPct, fBadges);
+
+    // Google Native Cache (Steady-state vs Raw + Miss Diagnostics)
+    var gc = RAW_DATA.googleNativeCache || {};
+    var swCnt = 0, swUnc = 0, idCnt = 0, idUnc = 0, brCnt = 0, brUnc = 0;
+    postConvs.forEach(function(c) {
+      swCnt += (c.postModelSwitches || 0);
+      swUnc += (c.postSwitchUncached || 0);
+      idCnt += (c.postIdleMisses || 0);
+      idUnc += (c.postIdleUncached || 0);
+      brCnt += (c.postPrefixBreaks || 0);
+      brUnc += (c.postBreakUncached || 0);
+    });
+    var rawCurPct = (usedUncached + usedCached) > 0 ? (usedCached / (usedUncached + usedCached)) * 100 : (gc.postCacheHitPct || 0);
+    var steadyDenom = Math.max(1, (usedUncached - swUnc - idUnc) + usedCached);
+    var steadyCurPct = (usedUncached + usedCached) > 0 ? (Math.min(usedCached, steadyDenom) / steadyDenom) * 100 : (gc.postSteadyCacheHitPct || rawCurPct);
+    var preSteadyPct = gc.preSteadyCacheHitPct || gc.preCacheHitPct || 0;
+    var deltaSteady = steadyCurPct - preSteadyPct;
+
+    document.getElementById('gcache-post-lbl').innerText = state.lang === 'en' ? 'Steady (with)' : 'Continu (avec)';
+    document.getElementById('gcache-pre-lbl').innerText = state.lang === 'en' ? 'Steady (before)' : 'Continu (avant)';
+    document.getElementById('gcache-post-val').innerText = fmtNum(steadyCurPct, 1) + ' %';
+    document.getElementById('gcache-pre-val').innerText = fmtNum(preSteadyPct, 1) + ' %';
+    var dEl = document.getElementById('gcache-delta-val');
+    dEl.innerText = (deltaSteady >= 0 ? '+' : '') + fmtNum(deltaSteady, 1) + ' pt';
+    dEl.style.color = deltaSteady >= 0 ? 'var(--sage)' : 'var(--ochre)';
+
+    var diagEl = document.getElementById('gcache-diag');
+    if (diagEl) {
+      diagEl.innerText = state.lang === 'en'
+        ? ('Raw cache: ' + fmtNum(rawCurPct, 1) + '% · Misses: Model switches (' + swCnt + ' · ' + fmtTok(swUnc) + ') · Pauses >5m (' + idCnt + ' · ' + fmtTok(idUnc) + ') · Prefix breaks (' + brCnt + ' · ' + fmtTok(brUnc) + ')')
+        : ('Cache brut : ' + fmtNum(rawCurPct, 1) + ' % · Fuites : Switches modèle (' + swCnt + ' · ' + fmtTok(swUnc) + ') · Pauses >5m (' + idCnt + ' · ' + fmtTok(idUnc) + ') · Ruptures préfixe (' + brCnt + ' · ' + fmtTok(brUnc) + ')');
+    }
+
+    // Dynamic Project Table (recomputed over active period filter)
+    var projMap = {};
+    filtered.forEach(function(c) {
+      var k = c.project || 'Général';
+      if (!projMap[k]) {
+        projMap[k] = { project: k, sessions: 0, postSessions: 0, postTurns: 0, used: 0, saved: 0, est: 0, usd: 0, hooks: 0 };
       }
-      googleNativeCacheEur += (c.googleCacheEur || 0);
+      var pr = projMap[k];
+      pr.sessions++;
+      if (c.postTurns > 0) pr.postSessions++;
+      var s = computeSessionSavings(c, baseline);
+      pr.postTurns += (c.postTurns || 0);
+      pr.used += s.used;
+      pr.saved += s.totalSaved;
+      pr.est += s.estWithout;
+      pr.usd += (c.postCostUsd || 0);
+      pr.hooks += ((c.hooks && c.hooks.total) || 0);
     });
+    var projRows = Object.keys(projMap).map(function(k) { return projMap[k]; })
+      .sort(function(a, b) { return (b.postTurns - a.postTurns) || (b.sessions - a.sessions); });
 
-    var totalTheorique = pluginCostEur + pluginSavedEur;
-    var reductionPct = totalTheorique > 0 ? ((pluginSavedEur / totalTheorique) * 100).toFixed(1) : "0,0";
-    var roiMultiplier = pluginCostEur > 0 ? (pluginSavedEur / pluginCostEur).toFixed(1) : "0,0";
-    var pluginCachePct = pluginInputTokens > 0 ? ((pluginCacheTokens / pluginInputTokens) * 100).toFixed(1) : "0,0";
-
-    var proBadge = document.getElementById('pro-reduction-badge');
-    if (proBadge) proBadge.innerText = '-' + reductionPct.replace('.', ',') + ' %';
-
-    document.getElementById('kpi-plugin-saved-eur').innerText = '+' + pluginSavedEur.toFixed(2).replace('.', ',') + ' €';
-    document.getElementById('kpi-gain-hint').innerText = 'Pour ' + pluginCostEur.toFixed(2).replace('.', ',') + ' € dépensés sous le plugin';
-    document.getElementById('kpi-reduction-pct').innerText = '-' + reductionPct.replace('.', ',') + ' %';
-    document.getElementById('kpi-roi-mult').innerText = roiMultiplier + 'x';
-    document.getElementById('kpi-plugin-cache-pct').innerText = pluginCachePct + ' %';
-    document.getElementById('kpi-plugin-cost-eur').innerText = pluginCostEur.toFixed(2).replace('.', ',') + ' €';
-    document.getElementById('kpi-google-cache-eur').innerText = googleNativeCacheEur.toFixed(2).replace('.', ',') + ' €';
-
-    // Rendu table sessions ROI
-    var roiTbody = document.getElementById('session-roi-rows');
-    if (roiTbody) {
-      if (filteredConv.length === 0) {
-        roiTbody.innerHTML = '<tr><td colspan="10" style="text-align:center; color:var(--muted); padding:20px;">Aucune session trouvée pour ces filtres.</td></tr>';
-      } else {
-        roiTbody.innerHTML = filteredConv.map(function(c) {
-          var pClass = (c.project || 'Général').replace(/\s+/g, '-');
-          var shortId = c.conversationId.length > 8 ? c.conversationId.substring(0, 8) : c.conversationId;
-          var statusBadge = c.isPluginActive ?
-            '<span class="badge-status active">🟢 Plugin Actif</span>' :
-            '<span class="badge-status past">⚪ Antérieur (Sans plugin)</span>';
-          var pluginGainText = c.isPluginActive ?
-            '<span class="eur-plugin-gain">+' + (c.pluginArbitrageEur || 0).toFixed(2) + ' €</span>' :
-            '<span style="color:var(--muted)">0,00 €</span>';
-          var reductionText = c.isPluginActive ?
-            '<span class="eur-plugin-gain">-' + (c.reductionPct || 0).toFixed(1) + ' %</span>' :
-            '<span style="color:var(--muted)">0,0 %</span>';
-          var cliText = (c.pluginCliSavedTokens && c.pluginCliSavedTokens > 0) ?
-            (c.pluginCliSavedTokens.toLocaleString('fr-FR') + ' tok') :
-            '-';
-          var cacheHitStr = (c.cacheHitPct !== undefined) ? (c.cacheHitPct + ' %') : '-';
-
+    var pTbody = document.getElementById('tbody-projects');
+    pTbody.innerHTML = projRows.length === 0
+      ? '<tr><td colspan="7" style="text-align:center; color:var(--ink-3); padding:20px;">' + esc(t.noData) + '</td></tr>'
+      : projRows.map(function(p) {
+          var pPct = p.est > 0 ? (p.saved / p.est) * 100 : 0;
+          var pEstUsd = (pPct > 0 && pPct < 95) ? (p.usd / (1 - pPct / 100)) : p.usd;
           return '<tr>' +
-            '<td><span class="tag-proj ' + pClass + '">' + (c.project || 'Général') + '</span></td>' +
-            '<td><code>' + shortId + '</code></td>' +
-            '<td>' + statusBadge + '</td>' +
-            '<td>' + c.lastUpdated + '</td>' +
-            '<td>' + c.plannerTurns + '</td>' +
-            '<td><strong>' + cacheHitStr + '</strong></td>' +
-            '<td>' + reductionText + '</td>' +
-            '<td>' + pluginGainText + '</td>' +
-            '<td>' + cliText + '</td>' +
-            '<td>' + (c.costEur || 0).toFixed(2) + ' €</td>' +
+            '<td><strong>' + esc(p.project) + '</strong></td>' +
+            '<td class="num">' + p.postSessions + ' / ' + p.sessions + '</td>' +
+            '<td class="num">' + p.postTurns.toLocaleString(loc()) + '</td>' +
+            '<td class="num">' + (p.postTurns > 0 ? esc(fmtVal(p.used, p.usd)) : '-') + '</td>' +
+            '<td class="num" style="color:var(--ink-2)">' + (p.postTurns > 0 ? esc(fmtVal(p.est, pEstUsd)) : '-') + '</td>' +
+            '<td class="num" style="color:var(--sage); font-weight:600;">' + (p.postTurns > 0 ? ('-' + fmtNum(pPct, 1) + ' %') : '-') + '</td>' +
+            '<td class="num">' + p.hooks + '</td>' +
           '</tr>';
         }).join('');
-      }
-    }
 
-    // Rendu projets
-    var projTbody = document.getElementById('project-rows');
-    if (projTbody) {
-      projTbody.innerHTML = (RAW_DATA.byProject || []).map(function(p) {
-        var pClass = (p.project || 'Général').replace(/\s+/g, '-');
-        var cliStr = (p.pluginCliTokens && p.pluginCliTokens > 0) ? p.pluginCliTokens.toLocaleString('fr-FR') + ' tok' : '-';
-        return '<tr>' +
-          '<td><span class="tag-proj ' + pClass + '">' + p.project + '</span></td>' +
-          '<td><strong>' + (p.pluginSessions || 0) + '</strong> / ' + p.sessions + '</td>' +
-          '<td class="eur-plugin-gain">+' + (p.pluginArbitrageEur || 0).toFixed(2) + ' €</td>' +
-          '<td>' + cliStr + '</td>' +
-          '<td>' + (p.costEur || 0).toFixed(2) + ' €</td>' +
-          '<td><span class="eur-cache-passive">' + (p.googleCacheEur || 0).toFixed(2) + ' €</span></td>' +
-        '</tr>';
-      }).join('');
-    }
+    // Session Table
+    var sTbody = document.getElementById('tbody-sessions');
+    sTbody.innerHTML = filtered.length === 0
+      ? '<tr><td colspan="10" style="text-align:center; color:var(--ink-3); padding:20px;">' + esc(t.noData) + '</td></tr>'
+      : filtered.map(function(c) {
+          var s = computeSessionSavings(c, baseline);
+          var stClass = c.pluginStatus === 'active' ? 'st-active' : (c.pluginStatus === 'mixed' ? 'st-mixed' : 'st-before');
+          var stLbl = c.pluginStatus === 'active' ? t.stActive : (c.pluginStatus === 'mixed' ? t.stMixed : t.stBefore);
+          var stTip = c.pluginStatus === 'mixed'
+            ? (state.lang === 'en'
+              ? 'Session started before plugin install: only post-install turns (' + c.postTurns + ') are counted; plugin remained active.'
+              : 'Session démarrée avant l\'installation du plugin : seuls les ' + c.postTurns + ' tours post-installation sont comptés (plugin toujours actif).')
+            : (c.pluginStatus === 'active'
+              ? (state.lang === 'en' ? '100% of turns ran with Token Optimizer active.' : '100 % des tours exécutés avec Token Optimizer actif.')
+              : (state.lang === 'en' ? 'Entirely prior to plugin installation (used as baseline).' : 'Session entièrement antérieure à l\'installation (sert de baseline).'));
+          var subBadge = c.isSubagent
+            ? ' <span class="tag-soft" title="' + esc((state.lang === 'en' ? 'Subagent of ' : 'Sous-agent rattaché à ') + String(c.parentConversationId || '').substring(0, 8)) + '">sub</span>'
+            : '';
+          var cEstUsd = (s.pct > 0 && s.pct < 95) ? ((c.postCostUsd || 0) / (1 - s.pct / 100)) : (c.postCostUsd || 0);
+          var turnStr = c.pluginStatus === 'before' ? ('0 / ' + c.totalTurns) : (c.postTurns + ' / ' + c.totalTurns);
+          var hk = c.hooks || {};
 
-    // Rendu onglet technique
-    var modelTbody = document.getElementById('model-rows');
-    if (modelTbody) {
-      var models = RAW_DATA.byModel || {};
-      modelTbody.innerHTML = Object.keys(models).map(function(mName) {
-        var m = models[mName];
-        var cost = m.costEur !== undefined ? m.costEur.toFixed(2) : ((m.estimatedUsd || 0) * 0.92).toFixed(2);
-        return '<tr>' +
-          '<td><code>' + mName + '</code></td>' +
-          '<td>' + m.turns + '</td>' +
-          '<td>' + ((m.inputTokens || 0) / 1e6).toFixed(2) + ' M</td>' +
-          '<td>' + m.cacheHitPct + ' %</td>' +
-          '<td>' + ((m.outputTokens || 0) / 1e3).toFixed(1) + ' k</td>' +
-          '<td>' + cost + ' €</td>' +
-        '</tr>';
-      }).join('');
-    }
+          return '<tr>' +
+            '<td><strong>' + esc(c.project) + '</strong></td>' +
+            '<td class="mono">' + esc(c.conversationId.substring(0, 8)) + subBadge + '</td>' +
+            '<td><span class="st-badge ' + stClass + '" title="' + esc(stTip) + '">' + esc(stLbl) + '</span></td>' +
+            '<td class="num" style="color:var(--ink-2)">' + esc(c.lastUpdated) + '</td>' +
+            '<td class="num">' + esc(turnStr) + '</td>' +
+            '<td class="num">' + (c.postTurns > 0 ? esc(fmtVal(s.used, c.postCostUsd)) : '-') + '</td>' +
+            '<td class="num" style="color:var(--ink-2)">' + (c.postTurns > 0 ? esc(fmtVal(s.estWithout, cEstUsd)) : '-') + '</td>' +
+            '<td class="num" style="color:var(--sage); font-weight:600;">' + (c.postTurns > 0 ? ('-' + fmtNum(s.pct, 1) + ' %') : '-') + '</td>' +
+            '<td class="num" style="color:var(--steel)">' + fmtNum(c.postCacheHitPct != null ? c.postCacheHitPct : c.cacheHitPct, 1) + ' %</td>' +
+            '<td class="num">' + (hk.total || 0) + '</td>' +
+          '</tr>';
+        }).join('');
 
-    // Verbose rows
-    var verboseTbody = document.getElementById('verbose-rows');
-    if (verboseTbody) {
-      verboseTbody.innerHTML = (RAW_DATA.topVerboseToolOutputs || []).map(function(v) {
-        var shortId = v.conversationId.length > 8 ? v.conversationId.substring(0, 8) : v.conversationId;
-        var prev = (v.preview || '').substring(0, 75);
-        return '<tr>' +
-          '<td><code>' + shortId + '</code></td>' +
-          '<td>' + (v.project || 'Général') + '</td>' +
-          '<td>Étape ' + v.stepIndex + '</td>' +
-          '<td>' + v.chars + '</td>' +
-          '<td>~' + v.estTokens + ' tok</td>' +
-          '<td style="color:var(--muted); font-size:11px;">' + prev + '...</td>' +
-        '</tr>';
-      }).join('');
-    }
-
-    // Tech session rows
-    var techTbody = document.getElementById('session-tech-rows');
-    if (techTbody) {
-      techTbody.innerHTML = (RAW_DATA.conversations || []).map(function(c) {
-        var shortId = c.conversationId.length > 8 ? c.conversationId.substring(0, 8) : c.conversationId;
-        var proj20 = (c.projectedNext20Turns || 0).toFixed(2);
-        return '<tr>' +
-          '<td><code>' + shortId + '</code></td>' +
-          '<td>' + (c.project || 'Général') + '</td>' +
-          '<td>' + c.lastUpdated + '</td>' +
-          '<td>' + ((c.inputTokens || 0) / 1e6).toFixed(2) + ' M</td>' +
-          '<td>' + c.cacheHitPct + ' %</td>' +
-          '<td>' + ((c.outputTokens || 0) / 1e3).toFixed(1) + ' k</td>' +
-          '<td>' + (c.costEur || 0).toFixed(2) + ' €</td>' +
-          '<td>' + proj20 + ' €</td>' +
-        '</tr>';
-      }).join('');
-    }
+    renderTechnicalTab();
   }
 
-  function buildProjectFilters() {
-    var group = document.getElementById('project-filter-group');
-    if (!group || !RAW_DATA || !RAW_DATA.byProject) return;
-    var html = '<span>Projet :</span>' +
-      '<button class="btn-pill ' + (currentProject === 'all' ? 'active' : '') + '" onclick="setProjectFilter(\'all\', this)">Tous</button>';
-    RAW_DATA.byProject.forEach(function(p) {
-      var isActive = (currentProject === p.project) ? 'active' : '';
-      var safeName = p.project.replace(/'/g, "\\'");
-      html += '<button class="btn-pill ' + isActive + '" onclick="setProjectFilter(\'' + safeName + '\', this)">' + p.project + '</button>';
-    });
-    group.innerHTML = html;
+  function renderTechnicalTab() {
+    var models = RAW_DATA.byModel || {};
+    var mKeys = Object.keys(models);
+    document.getElementById('tbody-models').innerHTML = mKeys.map(function(name) {
+      var m = models[name];
+      return '<tr>' +
+        '<td class="mono">' + esc(name) + '</td>' +
+        '<td>' + esc(m.tier || 'unknown') + (m.weight ? (' (' + m.weight + '×)') : '') + '</td>' +
+        '<td class="num">' + (m.turns || 0).toLocaleString(loc()) + '</td>' +
+        '<td class="num">' + esc(fmtTok(m.inputTokens || 0)) + '</td>' +
+        '<td class="num">' + fmtNum(m.cacheHitPct || 0, 1) + ' %</td>' +
+        '<td class="num">' + esc(fmtTok(m.outputTokens || 0)) + '</td>' +
+        '<td class="num">$' + fmtNum(m.estimatedUsd || 0, 2) + '</td>' +
+      '</tr>';
+    }).join('');
+
+    var verbs = asArr(RAW_DATA.topVerboseToolOutputs);
+    document.getElementById('tbody-verbose').innerHTML = verbs.map(function(v) {
+      return '<tr>' +
+        '<td class="mono">' + esc(String(v.conversationId || '').substring(0, 8)) + '</td>' +
+        '<td>' + esc(v.project || 'Général') + '</td>' +
+        '<td class="num">' + (v.stepIndex || 0) + '</td>' +
+        '<td class="num">' + (v.chars || 0).toLocaleString(loc()) + '</td>' +
+        '<td class="num">~' + (v.estTokens || 0).toLocaleString(loc()) + '</td>' +
+        '<td class="wrap-cell mono" style="color:var(--ink-3)">' + esc(String(v.preview || '').substring(0, 75)) + '...</td>' +
+      '</tr>';
+    }).join('');
+
+    var b = RAW_DATA.baseline || {};
+    var m = RAW_DATA.mechanisms || {};
+    var mb = document.getElementById('method-box');
+    mb.innerHTML = state.lang === 'en'
+      ? '<h3>Calculation Transparency</h3>' +
+        '<ul>' +
+          '<li><strong>Zero model-arbitrage inflation:</strong> Switching between Flash, Hydrogen or Orchestrator is tracked purely in the Model Choice Advisor card and never counted as automatic plugin token savings.</li>' +
+          '<li><strong>Zero Google cache inflation:</strong> Native prefix caching is isolated in its own neutral panel.</li>' +
+          '<li><strong>Mechanical savings formula:</strong> <code>Direct CLI blocks/compressions + Trimmed MCP schemas (1,500 tok/disabled server/turn on non-3D projects) + Residual per-turn context reduction vs pre-plugin history (' + (b.preTurns || 0) + ' pre turns)</code> without double counting.</li>' +
+          '<li><strong>Active MCP profile:</strong> Active servers: <code>' + esc(asArr(m.mcpActive).join(', ') || 'none') + '</code> · Disabled: <code>' + esc(asArr(m.mcpDisabled).join(', ') || 'none') + '</code>.</li>' +
+        '</ul>'
+      : '<h3>Transparence Méthodologique</h3>' +
+        '<ul>' +
+          '<li><strong>Zéro gonflage par arbitrage de modèle :</strong> le choix du modèle reste à votre discrétion ; les règles d\'aiguillage apparaissent uniquement en conseil (<code>0 token</code> compté).</li>' +
+          '<li><strong>Zéro amalgame avec le cache Google :</strong> le cache natif de préfixe est isolé dans son encart dédié.</li>' +
+          '<li><strong>Calcul mécanique pur :</strong> <code>Blocages &amp; compressions CLI + Schémas MCP coupés (1 500 tok/serveur désactivé/tour hors projets 3D) + Réduction résiduelle de contexte/tour vs historique pré-plugin (' + (b.preTurns || 0) + ' tours avant)</code> sans aucun double comptage.</li>' +
+          '<li><strong>Profil MCP détecté :</strong> Actifs : <code>' + esc(asArr(m.mcpActive).join(', ') || 'aucun') + '</code> · Désactivés : <code>' + esc(asArr(m.mcpDisabled).join(', ') || 'aucun') + '</code>.</li>' +
+        '</ul>';
   }
 
-  // Initial render when DOM is loaded
-  document.addEventListener('DOMContentLoaded', function() {
-    buildProjectFilters();
-    render();
-  });
+  applyStaticTexts();
   buildProjectFilters();
+  renderQuotaStrip();
   render();
+
+  // Highbeam Real-Time 5-min Cache Cliff Monitor
+  var hbState = {
+    isHttp: window.location.protocol.indexOf('http') === 0,
+    soundOn: localStorage.getItem('to_hb_sound') === '1',
+    beepedForTurn: false,
+    lastEventIso: (RAW_DATA.liveSession && RAW_DATA.liveSession.lastEventUtc) || null,
+    lastModel: (RAW_DATA.liveSession && RAW_DATA.liveSession.lastModel) || 'unknown',
+    lastCtx: (RAW_DATA.liveSession && RAW_DATA.liveSession.lastContextTokens) || 0,
+    convId: (RAW_DATA.liveSession && RAW_DATA.liveSession.conversationId) || ''
+  };
+
+  function updateSoundBtn() {
+    var b = document.getElementById('hb-sound-btn');
+    if (!b) return;
+    b.classList.toggle('active', hbState.soundOn);
+    b.innerText = (state.lang === 'en' ? 'Sound <1m: ' : 'Son < 1m : ') + (hbState.soundOn ? 'ON' : 'OFF');
+  }
+
+  function toggleCliffSound() {
+    hbState.soundOn = !hbState.soundOn;
+    localStorage.setItem('to_hb_sound', hbState.soundOn ? '1' : '0');
+    updateSoundBtn();
+  }
+
+  function playSoftBeep() {
+    try {
+      var Ctx = window.AudioContext || window.webkitAudioContext;
+      if (!Ctx) return;
+      var ctx = new Ctx();
+      var osc = ctx.createOscillator();
+      var gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = 587.33;
+      gain.gain.setValueAtTime(0.05, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.36);
+    } catch (e) {}
+  }
+
+  function refreshLiveDashboard(btn) {
+    if (!hbState.isHttp) {
+      location.reload();
+      return;
+    }
+    if (btn) btn.innerText = '...';
+    fetch('/api/refresh').then(function() {
+      location.reload();
+    }).catch(function() {
+      location.reload();
+    });
+  }
+
+  function renderHighbeamTick() {
+    var dot = document.getElementById('hb-dot');
+    var modeLbl = document.getElementById('hb-mode-lbl');
+    var ctxPill = document.getElementById('hb-ctx-pill');
+    var modelEl = document.getElementById('hb-model-lock');
+    var ruleTag = document.getElementById('hb-rule-tag');
+    var cliffTitle = document.getElementById('hb-cliff-title');
+    var timerEl = document.getElementById('hb-timer');
+    var barEl = document.getElementById('hb-bar');
+    var statusEl = document.getElementById('hb-status-txt');
+    var refBtn = document.getElementById('hb-refresh-btn');
+    if (!timerEl) return;
+
+    if (dot) dot.className = 'hb-live-dot' + (hbState.isHttp ? ' live' : '');
+    if (modeLbl) modeLbl.innerText = (hbState.isHttp ? 'LIVE · ' : (state.lang === 'en' ? 'STATIC · ' : 'STATIQUE · ')) + (state.lang === 'en' ? 'CACHE MONITOR' : 'MONITEUR CACHE');
+    if (ruleTag) ruleTag.innerText = state.lang === 'en' ? '1 session = 1 model' : '1 session = 1 modèle';
+    if (cliffTitle) cliffTitle.innerText = state.lang === 'en' ? '5-min Implicit Cache Cliff' : 'Falaise Cache Implicite (5:00)';
+    if (refBtn) refBtn.innerText = state.lang === 'en' ? 'Refresh' : 'Rafraîchir';
+    updateSoundBtn();
+
+    if (modelEl) modelEl.innerText = hbState.lastModel || '-';
+    if (ctxPill) ctxPill.innerText = hbState.lastCtx > 0 ? ('~' + fmtTok(hbState.lastCtx) + ' tok') : '-';
+
+    var rem = 0;
+    if (hbState.lastEventIso) {
+      var idleSec = Math.max(0, Math.floor((Date.now() - new Date(hbState.lastEventIso).getTime()) / 1000));
+      rem = Math.max(0, 300 - idleSec);
+    }
+
+    var mm = String(Math.floor(rem / 60)).padStart(2, '0');
+    var ss = String(rem % 60).padStart(2, '0');
+    timerEl.innerText = mm + ':' + ss;
+
+    var pct = Math.max(0, Math.min(100, (rem / 300) * 100));
+    barEl.style.width = pct + '%';
+
+    if (rem > 120) {
+      timerEl.className = 'hb-timer num';
+      barEl.className = 'meter-fill';
+      statusEl.innerText = state.lang === 'en' ? 'Warm cache · stay on current model' : 'Cache chaud · gardez ce modèle';
+      statusEl.style.color = 'var(--sage)';
+      document.title = '\uD83D\uDFE2 ' + mm + ':' + ss + ' · Token Optimizer';
+    } else if (rem > 0) {
+      timerEl.className = 'hb-timer num ' + (rem <= 60 ? 'crit' : 'warn');
+      barEl.className = 'meter-fill ' + (rem <= 60 ? 'crit' : 'warn');
+      statusEl.innerText = state.lang === 'en' ? 'Expiring soon — send next turn or open new chat' : 'Expire bientôt — envoyez ou ouvrez un nouveau fil';
+      statusEl.style.color = rem <= 60 ? 'var(--terra)' : 'var(--ochre)';
+      document.title = '\uD83D\uDFE0 ' + mm + ':' + ss + ' · Token Optimizer';
+      if (rem <= 60 && hbState.soundOn && !hbState.beepedForTurn) {
+        hbState.beepedForTurn = true;
+        playSoftBeep();
+      }
+    } else {
+      timerEl.className = 'hb-timer num crit';
+      barEl.className = 'meter-fill crit';
+      statusEl.innerText = state.lang === 'en' ? 'Cold cache (>5m) — new chat recommended' : 'Cache froid (>5m) — nouveau fil conseillé';
+      statusEl.style.color = 'var(--terra)';
+      document.title = '\uD83D\uDD34 ' + (state.lang === 'en' ? 'Cold' : 'Froid') + ' · Token Optimizer';
+    }
+  }
+
+  function pollLiveCache() {
+    if (!hbState.isHttp) return;
+    fetch('/api/live', { cache: 'no-store' })
+      .then(function(r) { return r.json(); })
+      .then(function(d) {
+        if (!d || !d.ok) return;
+        if (d.lastEventUtc && d.lastEventUtc !== hbState.lastEventIso) {
+          hbState.beepedForTurn = false;
+        }
+        if (d.lastEventUtc) hbState.lastEventIso = d.lastEventUtc;
+        if (d.lastModel) hbState.lastModel = d.lastModel;
+        if (d.lastContextTokens != null) hbState.lastCtx = d.lastContextTokens;
+        if (d.conversationId) hbState.convId = d.conversationId;
+        renderHighbeamTick();
+      })
+      .catch(function() {});
+  }
+
+  renderHighbeamTick();
+  setInterval(renderHighbeamTick, 1000);
+  if (hbState.isHttp) {
+    pollLiveCache();
+    setInterval(pollLiveCache, 3000);
+  }
 </script>
 </body>
 </html>

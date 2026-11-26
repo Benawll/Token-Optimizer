@@ -72,6 +72,7 @@ if ($Mode -eq "sync") {
             [System.IO.File]::AppendAllText($ignorePath, $block, [System.Text.UTF8Encoding]::new($false))
             $syncResult = "appended-lossless"
         }
+        Write-TokenOptimizerEvent -EventType "setup_apply" -SavedTokens 0 -Details @{ addedIgnores = $missingIgnores.Count }
     }
     elseif ($Apply) {
         $syncResult = "already-up-to-date"

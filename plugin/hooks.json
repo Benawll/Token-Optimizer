@@ -33,5 +33,15 @@
         "timeout": 5
       }
     ]
+  },
+  "token-optimizer-workflow-nudge": {
+    "enabled": true,
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "powershell -NoProfile -ExecutionPolicy Bypass -File ./hooks/workflow-nudge.ps1",
+        "timeout": 4
+      }
+    ]
   }
 }

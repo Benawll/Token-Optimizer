@@ -51,6 +51,20 @@ for ($i = 0; $i -lt $totalLines; $i++) {
 }
 
 $reduction = if ($totalLines -gt 0) { [math]::Round((1 - ($entries.Count / $totalLines)) * 100, 1) } else { 0.0 }
+try {
+    $coreLib = Join-Path $PSScriptRoot "..\..\..\lib\token-core.ps1"
+    if (Test-Path $coreLib) {
+        . $coreLib
+        $fullBytes = (Get-Item $resolved).Length
+        $outChars = ($entries -join "`n").Length
+        $savedTok = [math]::Max(0L, [long][math]::Ceiling(($fullBytes - $outChars) / 4))
+        Write-TokenOptimizerEvent -EventType "code_outline" -SavedTokens $savedTok -Details @{
+            totalLines   = $totalLines
+            outlineLines = $entries.Count
+        }
+    }
+}
+catch {}
 
 [ordered]@{
     file         = $resolved

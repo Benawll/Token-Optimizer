@@ -58,19 +58,21 @@ $emittedSet = [System.Collections.Generic.HashSet[string]]::new()
 
 $headCount = 0
 for ($i = 0; $i -lt $cleaned.Count -and $headCount -lt 5; $i++) {
-    if (-not [string]::IsNullOrWhiteSpace($cleaned[$i])) {
-        $kept.Add($cleaned[$i])
+    $lnH = $cleaned[$i]
+    if (-not [string]::IsNullOrWhiteSpace($lnH) -and ($lnH -notmatch '^\s*(PASS|ok|\u2713)\b')) {
+        $kept.Add($lnH)
         [void]$emittedSet.Add("$i")
         $headCount++
     }
 }
 
-$errRegex = '(?i)(error|fail|failed|exception|traceback|fatal|panic|assert|\bCS\d{4}\b|\bTS\d{4}\b|\bERR!|\bWARN\b|^\s*at\s|^\s*File\s+")'
+$errRegex = '(?i)(error|fail|failed|exception|traceback|fatal|panic|assert|\bCS\d{4}\b|\bTS\d{4}\b|\bERR!|\bWARN\b|^\s*at\s|^\s*File\s+"|^diff --git\s|^@@\s)'
 $errCounts = [ordered]@{}
 $errOrder = [System.Collections.Generic.List[string]]::new()
 for ($i = 0; $i -lt $cleaned.Count; $i++) {
     if ($emittedSet.Contains("$i")) { continue }
     $ln = $cleaned[$i]
+    if ($ln -match '^\s*(PASS|ok|\u2713)\b') { continue }
     if ($ln -match $errRegex) {
         if (-not $errCounts.Contains($ln)) {
             $errCounts[$ln] = 0
@@ -109,6 +111,15 @@ if ($tailIndices.Count -gt 0) {
 $origCount = $cleaned.Count
 $keptCount = $kept.Count
 $pct = if ($origCount -gt 0) { [math]::Round((1 - ($keptCount / $origCount)) * 100) } else { 0 }
+$keptChars = ($kept -join "`n").Length
+$savedTok = [math]::Max(0L, [long][math]::Ceiling(($totalChars - $keptChars) / 4))
+. (Join-Path $PSScriptRoot "..\lib\token-core.ps1")
+Write-TokenOptimizerEvent -EventType "cli_compress" -SavedTokens $savedTok -Details @{
+    origLines = $origCount
+    keptLines = $keptCount
+    origChars = $totalChars
+    keptChars = $keptChars
+}
 $kept.Add(('[Token Optimizer: {0} -> {1} lignes (-{2}%) | Exit: {3} | Log complet: {4} (rg/read_file si besoin)]' -f $origCount, $keptCount, $pct, $exitCode, $logPath))
 
 $kept -join "`n" | Write-Output

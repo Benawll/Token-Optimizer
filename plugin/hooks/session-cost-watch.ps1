@@ -32,7 +32,14 @@ try {
     if (Test-Path $statePath) {
         try {
             $loaded = Get-Content -Raw $statePath | ConvertFrom-Json
-            foreach ($prop in $loaded.PSObject.Properties) { $state[$prop.Name] = @($prop.Value) }
+            foreach ($prop in $loaded.PSObject.Properties) {
+                $arr = [System.Collections.Generic.List[string]]::new()
+                foreach ($v in @($prop.Value)) {
+                    $sv = [string]$v
+                    if (-not [string]::IsNullOrWhiteSpace($sv)) { $arr.Add($sv) }
+                }
+                $state[$prop.Name] = @($arr)
+            }
         }
         catch { $state = @{} }
     }
@@ -46,6 +53,7 @@ try {
         if ($Force -or ($seen -notcontains $loopWindow)) {
             $newKeys.Add($loopWindow)
             $messages.Add(('**Token Optimizer — Boucle d''échec détectée ({0} erreurs rapprochées)** : évitez de brûler des tours en boucle — lancez `/plan` pour recadrer, `/fork` avant un autre essai, ou passez temporairement sur **Neon high**.' -f $metrics.recentFailureCount))
+            if (-not $NoSaveState) { Write-TokenOptimizerEvent -EventType "loop_guard" -SavedTokens 0 -ConversationId $convId -Details @{ window = $loopWindow } }
         }
     }
 
@@ -67,14 +75,30 @@ try {
             $costStr = [math]::Round($metrics.estimatedUsd, 2).ToString("0.00", $invCulture)
             $projStr = [math]::Round($metrics.projectedNext20TurnsUsd, 2).ToString("0.00", $invCulture)
             $messages.Add(('**Token Optimizer — Prévision session ({0} tours)** : contexte **~{1}k** | cache hit **{2}%** | coût est. **${3}** | projection +20 tours : **+${4}**. Lancez `/compact` ou demandez un handoff `token-report` pour ouvrir une nouvelle session sans perte.' -f $metrics.turns, $ctxK, $metrics.cacheHitPct, $costStr, $projStr))
+            if (-not $NoSaveState -and $milestone) { Write-TokenOptimizerEvent -EventType "cost_watch" -SavedTokens 0 -ConversationId $convId -Details @{ milestone = $milestone } }
+        }
+
+        # 3. Zero-token Cache Thrashing Guard (model switches on large contexts > 60k)
+        $cd = $metrics.cacheDiagnostics
+        if ($cd -and $metrics.lastContextTokens -ge 60000 -and $cd.modelSwitches -ge 3) {
+            $thrashKey = if ($cd.modelSwitches -ge 15) { "THRASH_15" } elseif ($cd.modelSwitches -ge 10) { "THRASH_10" } elseif ($cd.modelSwitches -ge 6) { "THRASH_6" } else { "THRASH_3" }
+            if ($Force -or ($seen -notcontains $thrashKey)) {
+                $newKeys.Add($thrashKey)
+                $invC = [System.Globalization.CultureInfo]::InvariantCulture
+                $ctxK2 = [math]::Round($metrics.lastContextTokens / 1000, 0).ToString("0", $invC)
+                $swK = [math]::Round($cd.switchUncachedTokens / 1000, 0).ToString("0", $invC)
+                $messages.Add(('**Token Optimizer — Alerte Cache Thrashing (0 token)** : **{0} changements de modèle** sur un contexte de **~{1}k** ont déjà coûté **~{2}k tokens non cachés**. Évitez les allers-retours courts sur gros contexte : restez sur le modèle chaud ou lancez `/compact` / une nouvelle session avant de changer de palier.' -f $cd.modelSwitches, $ctxK2, $swK))
+                if (-not $NoSaveState) { Write-TokenOptimizerEvent -EventType "cost_watch" -SavedTokens 0 -ConversationId $convId -Details @{ milestone = $thrashKey } }
+            }
         }
     }
 
     if ($messages.Count -eq 0) { Write-Output '{}'; exit 0 }
 
     if (-not $NoSaveState -and $convId -and $newKeys.Count -gt 0) {
-        $state[$convId] = @($seen + $newKeys | Select-Object -Unique)
-        $state | ConvertTo-Json -Depth 4 | Set-Content -Path $statePath -Encoding UTF8
+        $merged = @(@($seen) + @($newKeys) | Select-Object -Unique)
+        $state[$convId] = ,$merged
+        [System.IO.File]::WriteAllText($statePath, ($state | ConvertTo-Json -Depth 4), [System.Text.UTF8Encoding]::new($false))
     }
 
     $md = $messages -join "`n"

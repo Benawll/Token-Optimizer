@@ -66,6 +66,12 @@ switch ($targetProfile) {
 }
 
 Write-McpMap -Path $ConfigPath -Map $newMap
+$removedCount = [math]::Max(0, ($catalog.Count - $newMap.Count))
+Write-TokenOptimizerEvent -EventType "mcp_trim" -SavedTokens 0 -Details @{
+    profile        = $targetProfile
+    removedServers = $removedCount
+    activeServers  = $newMap.Count
+}
 
 [ordered]@{
     action            = $Action
