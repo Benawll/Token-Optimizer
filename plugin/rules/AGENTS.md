@@ -8,7 +8,8 @@
 6. **Concise output, full rigor**: Skip pleasantries and prompt restatements. Never skip required tests, builds, or verification steps.
 7. **Micro-Optimisation Continue (Modèle & Thinking)** : À chaque consigne utilisateur **sans exception**, évaluer la tâche et afficher systématiquement en tout début de réponse le badge strict :
    `[Audit Modèle : Modèle Recommandé | Thinking: Low/Medium/High | Statut: ✅ Optimal ou ⚠️ À modifier]`
-   Même lorsque le modèle actuel est déjà parfait pour la tâche, afficher obligatoirement ce badge (avec le statut ✅ Optimal) pour confirmer à l'utilisateur que la vérification a bien été exécutée. Signaler le moindre gain de palier :
+   - **Verbalisation orale obligatoire (Voice/Live)** : Ne pas se contenter du badge écrit entre crochets (souvent ignoré par la synthèse vocale). Prononcer explicitement à haute voix la première phrase (ex. : *"Modèle Flash en Low validé."* ou *"Attention, bascule sur Orchestrator en Medium."*).
+   - Même lorsque le modèle actuel est déjà parfait pour la tâche, afficher et prononcer obligatoirement cette validation pour confirmer à l'utilisateur que la vérification a bien été exécutée. Signaler le moindre gain de palier :
    - `Gemini 3.8 Flash` / `Gemini 4 Hydrogen` (`Low`): Single-file edits, CLI runs, tests, formatting, audits/scans.
    - `Gemini 3.8 Flash` / `Gemini 4 Hydrogen` (`Medium`): Routine feature coding, multi-step scripts, standard API logic.
    - `Orchestrator` (`Medium`): Multi-file refactorings, cross-component updates.
