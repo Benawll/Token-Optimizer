@@ -185,11 +185,10 @@
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
+    background: rgba(56, 189, 248, 0.15);
+    color: #7dd3fc;
+    border: 1px solid rgba(56, 189, 248, 0.3);
   }
-  .tag-proj.Career-Ops { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
-  .tag-proj.Token-Optimizer { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.3); }
-  .tag-proj.Awll { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
-  .tag-proj.Général { background: rgba(148, 163, 184, 0.15); color: #cbd5e1; border: 1px solid rgba(148, 163, 184, 0.3); }
   
   .badge-status {
     display: inline-block;
@@ -249,13 +248,9 @@
         <button class="btn-pill" onclick="setPeriodFilter('24h', this)">Dernières 24h</button>
         <button class="btn-pill" onclick="setPeriodFilter('7d', this)">7 derniers jours</button>
       </div>
-      <div class="filter-group">
+      <div class="filter-group" id="project-filter-group">
         <span>Projet :</span>
         <button class="btn-pill active" onclick="setProjectFilter('all', this)">Tous</button>
-        <button class="btn-pill" onclick="setProjectFilter('Career Ops', this)">Career Ops</button>
-        <button class="btn-pill" onclick="setProjectFilter('Token Optimizer', this)">Token Optimizer</button>
-        <button class="btn-pill" onclick="setProjectFilter('Awll', this)">Awll</button>
-        <button class="btn-pill" onclick="setProjectFilter('Général', this)">Autres</button>
       </div>
     </div>
 
@@ -572,10 +567,25 @@
     }
   }
 
+  function buildProjectFilters() {
+    var group = document.getElementById('project-filter-group');
+    if (!group || !RAW_DATA || !RAW_DATA.byProject) return;
+    var html = '<span>Projet :</span>' +
+      '<button class="btn-pill ' + (currentProject === 'all' ? 'active' : '') + '" onclick="setProjectFilter(\'all\', this)">Tous</button>';
+    RAW_DATA.byProject.forEach(function(p) {
+      var isActive = (currentProject === p.project) ? 'active' : '';
+      var safeName = p.project.replace(/'/g, "\\'");
+      html += '<button class="btn-pill ' + isActive + '" onclick="setProjectFilter(\'' + safeName + '\', this)">' + p.project + '</button>';
+    });
+    group.innerHTML = html;
+  }
+
   // Initial render when DOM is loaded
   document.addEventListener('DOMContentLoaded', function() {
+    buildProjectFilters();
     render();
   });
+  buildProjectFilters();
   render();
 </script>
 </body>

@@ -52,15 +52,17 @@ foreach ($file in $transcripts) {
     $convId = $file.Directory.Parent.Parent.Name
     $m = Get-TranscriptMetrics -TranscriptPath $file.FullName
 
-    # Détection du projet
-    $sample = Get-Content $file.FullName -TotalCount 40 -ErrorAction SilentlyContinue | Out-String
+    # Détection dynamique et générique du projet via les chemins de travail (0 nom en dur)
+    $lines = Get-Content $file.FullName -TotalCount 35 -ErrorAction SilentlyContinue
     $project = "Général"
-    if ($sample -match "Career-ops|career_ops|Candidatures") {
-        $project = "Career Ops"
-    } elseif ($sample -match "Token[ -]Optimizer") {
-        $project = "Token Optimizer"
-    } elseif ($sample -match "Awll|awll|utility") {
-        $project = "Awll"
+    foreach ($l in $lines) {
+        if ($l -match '(?i)[a-zA-Z]:\\+(?!Users|Windows|Program Files|AppData|temp)([a-zA-Z0-9_\-\. ]+?)(?:\\+|["''])') {
+            $candidate = $matches[1].Trim()
+            if ($candidate -and $candidate.Length -ge 2 -and $candidate -notmatch '^(gemini|node_modules|\.git|system_generated)$') {
+                $project = $candidate
+                break
+            }
+        }
     }
 
     $actualCostEur = [math]::Round($m.estimatedUsd * $USD_TO_EUR, 4)
