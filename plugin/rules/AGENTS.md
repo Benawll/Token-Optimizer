@@ -6,7 +6,9 @@
 4. **Quiet CLI output**: Chain dependent commands with `&&`. Pass quiet flags (`-q`, `--quiet`, `--silent`, `--no-progress`) and cap verbose output (`| Select-Object -Last 50` / `| tail -n 50`).
 5. **Isolate noisy tasks**: Delegate broad codebase surveys, heavy log analysis, and web browsing to isolated subagents (`research`, `browser`).
 6. **Concise output, full rigor**: Skip pleasantries and prompt restatements. Never skip required tests, builds, or verification steps.
-7. **Micro-Optimisation Continue (Modèle & Thinking)** : À chaque consigne utilisateur sans exception, évaluer la tâche et afficher systématiquement en première ligne le tag strict `[Recommandation : Modèle | Thinking: Exact]`. Ne jamais réserver l'alerte aux seuls cas extrêmes : signaler le moindre gain de palier (ex. passer de Medium à Low, ou d'Hydrogen à Flash dès que possible).
+7. **Micro-Optimisation Continue (Modèle & Thinking)** : À chaque consigne utilisateur **sans exception**, évaluer la tâche et afficher systématiquement en tout début de réponse le badge strict :
+   `[Audit Modèle : Modèle Recommandé | Thinking: Low/Medium/High | Statut: ✅ Optimal ou ⚠️ À modifier]`
+   Même lorsque le modèle actuel est déjà parfait pour la tâche, afficher obligatoirement ce badge (avec le statut ✅ Optimal) pour confirmer à l'utilisateur que la vérification a bien été exécutée. Signaler le moindre gain de palier :
    - `Gemini 3.8 Flash` / `Gemini 4 Hydrogen` (`Low`): Single-file edits, CLI runs, tests, formatting, audits/scans.
    - `Gemini 3.8 Flash` / `Gemini 4 Hydrogen` (`Medium`): Routine feature coding, multi-step scripts, standard API logic.
    - `Orchestrator` (`Medium`): Multi-file refactorings, cross-component updates.
