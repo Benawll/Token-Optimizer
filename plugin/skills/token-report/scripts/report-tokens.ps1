@@ -41,6 +41,8 @@ $pluginSessionsCount = 0
 $pluginArbitrageSavedEur = 0.0
 $pluginCliSavedTokens = 0L
 $pluginActualCostEur = 0.0
+$pluginInputTokens = 0L
+$pluginCacheTokens = 0L
 
 # 2. MÉTRIQUES CACHE NATIF GOOGLE (infrastructure globale présente par défaut)
 $googleNativeCacheTokens = 0L
@@ -109,6 +111,8 @@ foreach ($file in $transcripts) {
         $pluginArbitrageSavedEur += $sessionArbitrageEur
         $pluginCliSavedTokens += $sessionCliSavedTokens
         $pluginActualCostEur += $actualCostEur
+        $pluginInputTokens += $m.inputTokens
+        $pluginCacheTokens += $m.cacheReadTokens
     }
 
     # Aggrégation par projet
@@ -172,6 +176,11 @@ foreach ($file in $transcripts) {
 }
 
 $globalHit = if ($totalInput -gt 0) { [math]::Round(($totalCache / $totalInput) * 100, 1) } else { 0.0 }
+$pluginHit = if ($pluginInputTokens -gt 0) { [math]::Round(($pluginCacheTokens / $pluginInputTokens) * 100, 1) } else { 0.0 }
+
+$totalTheoreticalEur = $pluginActualCostEur + $pluginArbitrageSavedEur
+$reductionPct = if ($totalTheoreticalEur -gt 0) { [math]::Round(($pluginArbitrageSavedEur / $totalTheoreticalEur) * 100, 1) } else { 0.0 }
+$roiMultiplier = if ($pluginActualCostEur -gt 0) { [math]::Round($pluginArbitrageSavedEur / $pluginActualCostEur, 1) } else { 0.0 }
 
 $modelSummary = @{}
 foreach ($k in $byModel.Keys) {
@@ -216,6 +225,9 @@ foreach ($pk in $byProject.Keys) {
         arbitrageSavedEur  = [math]::Round($pluginArbitrageSavedEur, 2)
         cliSavedTokens     = $pluginCliSavedTokens
         pluginActualCost   = [math]::Round($pluginActualCostEur, 2)
+        reductionPct       = $reductionPct
+        roiMultiplier      = $roiMultiplier
+        pluginCacheHitPct  = $pluginHit
     }
 
     # 2. CACHE NATIF GOOGLE (INFRASTRUCTURE PAR DÉFAUT)

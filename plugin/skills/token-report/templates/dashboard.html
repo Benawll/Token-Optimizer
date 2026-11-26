@@ -251,22 +251,27 @@
       <div class="card plugin-gain">
         <div class="k">Gain Net Token Optimizer (€)</div>
         <div class="v gain" id="kpi-plugin-saved-eur">0,00 €</div>
-        <div class="hint">Économie d'arbitrage (Flash vs Neon) guidée par le plugin</div>
+        <div class="hint" id="kpi-gain-hint">Économie d'arbitrage Flash vs Neon</div>
       </div>
       <div class="card plugin-cli">
-        <div class="k">Tokens CLI Tronqués</div>
-        <div class="v cli" id="kpi-plugin-cli-tok">0 tok</div>
-        <div class="hint">Tokens de sorties verbeuses interceptés par nos hooks</div>
+        <div class="k">Taux de Réduction Facture</div>
+        <div class="v cli" id="kpi-reduction-pct">0%</div>
+        <div class="hint">Soit <strong id="kpi-roi-mult">0x</strong> le montant réellement dépensé</div>
+      </div>
+      <div class="card plugin-tok">
+        <div class="k">Cache Protégé par le Plugin</div>
+        <div class="v tokens" id="kpi-plugin-cache-pct">0%</div>
+        <div class="hint">Sur les sessions sous plugin (préservé de la saturation CLI)</div>
       </div>
       <div class="card plugin-spent">
         <div class="k">Coût Réel Dépensé (Plugin)</div>
         <div class="v spent" id="kpi-plugin-cost-eur">0,00 €</div>
-        <div class="hint">Facture réelle sur les sessions protégées par le plugin</div>
+        <div class="hint">Facture réelle sur les sessions protégées</div>
       </div>
       <div class="card google-cache">
-        <div class="k">Cache Natif Google (Passif)</div>
+        <div class="k">Cache Natif Google Passif</div>
         <div class="v cache" id="kpi-google-cache-eur">0,00 €</div>
-        <div class="hint">Infrastructure automatique Gemini (présente par défaut)</div>
+        <div class="hint">Mécanisme automatique Gemini de base</div>
       </div>
     </div>
 
@@ -411,6 +416,8 @@
     var pluginSavedEur = 0;
     var pluginCliTokens = 0;
     var pluginCostEur = 0;
+    var pluginInputTokens = 0;
+    var pluginCacheTokens = 0;
     var googleNativeCacheEur = 0;
 
     filteredConv.forEach(function(c) {
@@ -418,12 +425,22 @@
         pluginSavedEur += (c.pluginArbitrageEur || 0);
         pluginCliTokens += (c.pluginCliSavedTokens || 0);
         pluginCostEur += (c.costEur || 0);
+        pluginInputTokens += (c.inputTokens || 0);
+        pluginCacheTokens += (c.cacheReadTokens || 0);
       }
       googleNativeCacheEur += (c.googleCacheEur || 0);
     });
 
+    var totalTheorique = pluginCostEur + pluginSavedEur;
+    var reductionPct = totalTheorique > 0 ? ((pluginSavedEur / totalTheorique) * 100).toFixed(1) : "0,0";
+    var roiMultiplier = pluginCostEur > 0 ? (pluginSavedEur / pluginCostEur).toFixed(1) : "0,0";
+    var pluginCachePct = pluginInputTokens > 0 ? ((pluginCacheTokens / pluginInputTokens) * 100).toFixed(1) : "0,0";
+
     document.getElementById('kpi-plugin-saved-eur').innerText = '+' + pluginSavedEur.toFixed(2).replace('.', ',') + ' €';
-    document.getElementById('kpi-plugin-cli-tok').innerText = pluginCliTokens.toLocaleString('fr-FR') + ' tok';
+    document.getElementById('kpi-gain-hint').innerText = 'Pour ' + pluginCostEur.toFixed(2).replace('.', ',') + ' € dépensés sous le plugin';
+    document.getElementById('kpi-reduction-pct').innerText = '-' + reductionPct.replace('.', ',') + ' %';
+    document.getElementById('kpi-roi-mult').innerText = roiMultiplier + 'x';
+    document.getElementById('kpi-plugin-cache-pct').innerText = pluginCachePct + ' %';
     document.getElementById('kpi-plugin-cost-eur').innerText = pluginCostEur.toFixed(2).replace('.', ',') + ' €';
     document.getElementById('kpi-google-cache-eur').innerText = googleNativeCacheEur.toFixed(2).replace('.', ',') + ' €';
 
