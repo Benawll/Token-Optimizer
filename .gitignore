@@ -10,6 +10,7 @@ desktop.ini
 *.tmp
 *.temp
 *.html
+!plugin/skills/token-report/templates/*.html
 to-sandbox/
 brain_archive/
 mcp_profiles/
