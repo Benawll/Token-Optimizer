@@ -156,7 +156,7 @@ function Get-ModelQuotaProfile {
     #>
     param([string]$Model)
     $m = if ($Model) { $Model.ToLowerInvariant() } else { "" }
-    if ($m -match 'flash') {
+    if (($m -match 'hydrogen' -and $m -match 'low') -or ($m -match 'flash|lite|worker')) {
         return [ordered]@{ tier = "light"; weight = 1.0; uncachedUsdPerM = 0.30; cachedUsdPerM = 0.03; outUsdPerM = 2.50 }
     }
     elseif ($m -match 'hydrogen') {
