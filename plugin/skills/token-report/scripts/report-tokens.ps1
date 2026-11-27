@@ -456,6 +456,32 @@ foreach ($file in $transcripts) {
     $preAll.switches += $pre.modelSwitches; $preAll.switchUnc += $pre.switchUncachedTokens
     $preAll.idles += $pre.idleMisses; $preAll.idleUnc += $pre.idleUncachedTokens
     $preAll.breaks += $pre.prefixBreaks; $preAll.breakUnc += $pre.prefixBreakUncachedTokens
+    if (-not $preDepthAll) {
+        $preDepthAll = @{
+            "1-15" = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+            "16-30" = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+            "31-60" = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+            "61+" = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+        }
+        $postDepthAll = @{
+            "1-15" = @{ turns = 0 }
+            "16-30" = @{ turns = 0 }
+            "31-60" = @{ turns = 0 }
+            "61+" = @{ turns = 0 }
+        }
+    }
+    foreach ($dk in @("1-15", "16-30", "31-60", "61+")) {
+        if ($pre.byDepth -and $pre.byDepth[$dk]) {
+            $preDepthAll[$dk].turns += $pre.byDepth[$dk].turns
+            $preDepthAll[$dk].uncached += $pre.byDepth[$dk].uncached
+            $preDepthAll[$dk].cached += $pre.byDepth[$dk].cached
+            $preDepthAll[$dk].out += $pre.byDepth[$dk].out
+            $preDepthAll[$dk].raw += $pre.byDepth[$dk].raw
+        }
+        if ($post.byDepth -and $post.byDepth[$dk]) {
+            $postDepthAll[$dk].turns += $post.byDepth[$dk].turns
+        }
+    }
 
     if ($post.turns -gt 0) { $postAll.sessions++ }
     $postAll.turns += $post.turns; $postAll.knownTurns += $post.knownTurns
@@ -617,13 +643,42 @@ foreach ($file in $transcripts) {
     })
 }
 
-# Pure Token Baseline (PRE plugin — zero fake model-arbitrage pricing!)
+# Pure Token Baseline (PRE plugin — depth-matched by session turn index!)
 $preTotalIn = $preAll.uncached + $preAll.cached
 $preCacheHit = if ($preTotalIn -gt 0) { [math]::Round(($preAll.cached / $preTotalIn) * 100, 1) } else { 0.0 }
 $preAvgRaw = if ($preAll.turns -gt 0) { [math]::Round($preAll.raw / $preAll.turns, 1) } else { 0.0 }
 $preAvgCtx = if ($preAll.turns -gt 0) { [math]::Round($preTotalIn / $preAll.turns, 1) } else { 0.0 }
 $preAvgUnc = if ($preAll.turns -gt 0) { [math]::Round($preAll.uncached / $preAll.turns, 1) } else { 0.0 }
 $preAvgOut = if ($preAll.turns -gt 0) { [math]::Round($preAll.out / $preAll.turns, 1) } else { 0.0 }
+if ($postAll.turns -gt 0 -and $preAll.turns -ge 20 -and $preDepthAll -and $postDepthAll) {
+    $wRaw = 0.0; $wCtx = 0.0; $wUnc = 0.0; $wOut = 0.0; $wCached = 0.0; $wTurns = 0
+    foreach ($dk in @("1-15", "16-30", "31-60", "61+")) {
+        $pt = $postDepthAll[$dk].turns
+        if ($pt -le 0) { continue }
+        $pd = $preDepthAll[$dk]
+        if ($pd.turns -gt 0) {
+            $wRaw += ($pd.raw / $pd.turns) * $pt
+            $wCtx += (($pd.uncached + $pd.cached) / $pd.turns) * $pt
+            $wUnc += ($pd.uncached / $pd.turns) * $pt
+            $wOut += ($pd.out / $pd.turns) * $pt
+            $wCached += ($pd.cached / $pd.turns) * $pt
+        } else {
+            $wRaw += $preAvgRaw * $pt
+            $wCtx += $preAvgCtx * $pt
+            $wUnc += $preAvgUnc * $pt
+            $wOut += $preAvgOut * $pt
+            $wCached += ($preAll.cached / $preAll.turns) * $pt
+        }
+        $wTurns += $pt
+    }
+    if ($wTurns -gt 0) {
+        $preAvgRaw = [math]::Round($wRaw / $wTurns, 1)
+        $preAvgCtx = [math]::Round($wCtx / $wTurns, 1)
+        $preAvgUnc = [math]::Round($wUnc / $wTurns, 1)
+        $preAvgOut = [math]::Round($wOut / $wTurns, 1)
+        $preCacheHit = if ($wCtx -gt 0) { [math]::Round(($wCached / $wCtx) * 100, 1) } else { 0.0 }
+    }
+}
 $baselineSource = if ($preAll.turns -ge 20) { "personal" } else { "mechanisms_only" }
 $preKnownMixSum = [math]::Max(1, ($preAll.light + $preAll.mid + $preAll.heavy))
 

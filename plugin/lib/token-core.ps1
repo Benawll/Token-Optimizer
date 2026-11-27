@@ -205,6 +205,12 @@ function Get-TranscriptMetrics {
             idleUncachedTokens        = 0L
             prefixBreaks              = 0
             prefixBreakUncachedTokens = 0L
+            byDepth                   = @{
+                "1-15"  = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+                "16-30" = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+                "31-60" = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+                "61+"   = @{ turns = 0; uncached = 0L; cached = 0L; out = 0L; raw = 0L }
+            }
         }
     }
 
@@ -311,6 +317,13 @@ function Get-TranscriptMetrics {
             $bkt.outputTokens += $outTok
             $bkt.rawTokens += $rawTok
             $bkt.effBaseTokens += $effBaseTok
+            $dKey = if ($turns -le 15) { "1-15" } elseif ($turns -le 30) { "16-30" } elseif ($turns -le 60) { "31-60" } else { "61+" }
+            $db = $bkt.byDepth[$dKey]
+            $db.turns++
+            $db.uncached += $uncached
+            $db.cached += $cached
+            $db.out += $outTok
+            $db.raw += $rawTok
 
             # Classify major cache misses (warm model switch <300s vs >5m TTL pause vs prefix break)
             $gapMin = if ($null -ne $prevPlannerUtc) { ($evUtc - $prevPlannerUtc).TotalMinutes } else { 0.0 }
