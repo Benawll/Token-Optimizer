@@ -38,7 +38,7 @@ function Get-DynamicPluginInstallUtc {
         try {
             $meta = Get-Content -Raw -Path $metaPath -ErrorAction Stop | ConvertFrom-Json
             if ($meta.installedAtUtc) {
-                $candidates.Add((ConvertTo-UtcDateTime -Value $meta.installedAtUtc))
+                return (ConvertTo-UtcDateTime -Value $meta.installedAtUtc).ToUniversalTime()
             }
         }
         catch {}
